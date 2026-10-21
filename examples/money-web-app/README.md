@@ -1,5 +1,7 @@
 # End-to-end Example: PocketLedger — a Money-Tracking Web App with Auth
 
+> **Scope: process walkthrough + verification — NOT for production deployment.** The runnable app under `app/` is a teaching artifact (SQLite, single-node, plain HTTP cookies on localhost); deploy it only as a sandbox demo, never as a real system.
+>
 > A security-heavy example walking the FULL chain — portfolio scorecard → discovery → the six lifecycle stages — for a basic personal money-management web application (registration/login + income/expense tracking + monthly summary). Where [`mini-todo-api`](../mini-todo-api/) shows a "first run", this one shows what changes when the product touches **authentication and financial data**: threat modeling, SR-x security requirements, security gates, and UX gates all fire.
 
 **Product:** PocketLedger — web app, server-rendered (Node 22 · Express · SQLite · htmx). No payment processing — it tracks money, it doesn't move it.

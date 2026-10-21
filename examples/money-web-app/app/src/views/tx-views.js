@@ -28,12 +28,12 @@ export function listView({ data, page }) {
       <td class="${esc(t.kind)}">${esc(t.kind)}</td>
       <td>${esc(t.category)}</td>
       <td>${esc(t.note)}</td>
-      <td style="text-align:right" class="${esc(t.kind)}">${money(t.amount_cents)}</td>
+      <td class="amount ${esc(t.kind)}">${money(t.amount_cents)}</td>
       <td>
-        <details><summary class="muted" style="cursor:pointer">edit</summary>${txForm(t, `/transactions/${t.id}/edit`, 'Save')}</details>
+        <details><summary class="muted">edit</summary>${txForm(t, `/transactions/${t.id}/edit`, 'Save')}</details>
         <form class="inline" method="post" action="/transactions/${t.id}/delete"
               onsubmit="return confirm('Delete this transaction?')">
-          <button class="muted" style="background:none;color:#b3261e;padding:0.1rem 0.3rem">delete</button>
+          <button class="delete-btn">delete</button>
         </form>
       </td>
     </tr>`).join('');
@@ -57,7 +57,7 @@ export function listView({ data, page }) {
 export function summaryView({ summary }) {
   const rows = summary.byCategory.map((r) => `
     <tr><td>${esc(r.category)}</td><td class="${esc(r.kind)}">${esc(r.kind)}</td>
-    <td style="text-align:right">${money(r.total)}</td></tr>`).join('');
+    <td class="amount">${money(r.total)}</td></tr>`).join('');
   return `
   <h1>Summary — ${esc(summary.month)}</h1>
   <form class="card" method="get" action="/summary">

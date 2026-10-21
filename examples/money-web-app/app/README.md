@@ -5,6 +5,9 @@ money-tracking web app with authentication, built to verify the spec's FR/SR req
 against real behavior. This folder is what the AI-SDLC Test stage calls a **gate run** —
 see [RUN-REPORT.md](RUN-REPORT.md) for the requirement-by-requirement verdict.
 
+> ⚠️ **Test-bench only.** This app exists to verify the kit's flow and gates (see [RUN-REPORT.md](RUN-REPORT.md)). It is not hardened for production: SQLite file DB, no TLS, no rate-limit persistence, single process. Copy the *patterns*, not the deployment.
+>
+
 ## Stack
 
 Node ≥ 22.13 (built-in `node:sqlite`, zero native modules; developed and tested on Node 24)

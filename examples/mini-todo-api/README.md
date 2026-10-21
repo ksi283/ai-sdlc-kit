@@ -1,5 +1,7 @@
 # End-to-end Example: Mini Todo API
 
+> **Scope: process walkthrough only — NOT a deployable application.** It exists to exercise the lifecycle; there is no runnable app here.
+>
 > A small unit of work passing through **all six stages** of the AI-SDLC kit, using the exact templates from `templates/`. Purpose: to show what a real lifecycle run looks like — not complete code, but the chain of artifacts + decisions at each gate.
 
 **Scenario:** the "Internal Tools" squad (5 people) is in the Walk stage (months 2–3 of the `07-adoption.md` roadmap). The pilot agent **builder-claude** is at level **L1**. Tooling: Claude Code (build), a GPT reviewer + a Gemini reviewer (layer-1 review), GitHub Actions (CI/gates), Docker (sandbox).

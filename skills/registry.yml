@@ -1,0 +1,29 @@
+# Skills registry — approved optional capability packs.
+# Every entry: exact version pin, license, install command, review notes.
+# Installed packs are NOT committed (see skills/README.md rule 3).
+
+packs:
+  - name: ui-ux-pro-max
+    source: https://github.com/nextlevelbuilder/ui-ux-pro-max-skill
+    version: "2.15.0"
+    license: MIT
+    purpose: >
+      Design intelligence for UI/UX work: 79 styles, 192 product palettes,
+      74 font pairings, UX guidelines, pre-delivery checklists (contrast,
+      focus states, reduced motion, responsive breakpoints).
+    install:
+      # per-project (recommended for kit projects):
+      cmd: npx -y ui-ux-pro-max-cli@2.15.0 init --ai claude
+      lands-in: .claude/skills/          # also supports --ai cursor|codex|gemini|all …
+      # machine-global alternative:
+      global_cmd: npm install -g ui-ux-pro-max-cli@2.15.0 && uipro init --ai claude --global
+    requirements:
+      python: ">=3.9 (stdlib only — search scripts make no network calls)"
+    security_review:
+      date: 2026-10-22
+      network_calls: none (local CSV search engine)
+      files_generated: ".claude/skills/**, .claude/design-system/** (both gitignored)"
+    first_used_on: examples/money-web-app (UI/UX upgrade, see app/UI-UX-EVALUATION.md)
+    outputs_to_commit:
+      - DESIGN-SYSTEM.md (project-owned decisions + provenance)
+      - screenshots of the evaluated result
