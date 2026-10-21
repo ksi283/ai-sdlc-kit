@@ -1,0 +1,226 @@
+# quality-gates.yml — Starter quality gate set
+# Illustrated in the style of the ai-sdlc.io spec (QualityGate resource, v1alpha1).
+# This IS a "policy-as-code" file: keep it in the central repo, review via PRs.
+# Enforcement tiers: advisory (warn only) → soft-mandatory (blocks, overridable with
+# justification) → hard-mandatory (blocks unconditionally). Safe start: mostly
+# advisory, promote gradually per docs/en/04-gates-policy.md section 5.
+
+apiVersion: ai-sdlc.dev/v1alpha1
+kind: QualityGate
+metadata:
+  name: startup-gates
+  labels:
+    scope: default
+rules:
+
+  # ── GATE: Definition of Ready (Design → Build) ─────────────────────
+  - id: dor-acceptance-criteria
+    description: Spec must have measurable acceptance criteria for every FR
+    type: documentation            # documentation-based
+    spec:
+      requireFields: ["requirements[].acceptance"]
+    enforcement: soft-mandatory
+    override:
+      requiredRole: tech-lead
+      requiresJustification: true
+
+  - id: dor-complexity-scored
+    description: Every task must carry a 1–10 complexity score and a working mode
+    type: documentation
+    spec:
+      requireFields: ["tasks[].complexity", "tasks[].mode"]
+    enforcement: advisory          # promote to soft after 1 month
+
+  # ── GATE: Build-Ready (Build → Test) ───────────────────────────────
+  - id: build-ci-green
+    description: Build, unit tests, lint must pass inside the container
+    type: tool                     # tool-based
+    spec:
+      run: ci
+      failOn: [error]
+    enforcement: hard-mandatory    # non-negotiable
+
+  - id: build-pr-size-by-autonomy
+    description: PR ≤ line limit per agent autonomy level (L1 200/L2 500/L3 1000)
+    type: metric                   # metric-based
+    spec:
+      metric: pr.lines_changed
+      maxByAuthor:
+        ai-agent: 500              # adjust to the actual autonomy level
+        human: 1000
+    enforcement: advisory
+
+  - id: build-attribution
+    description: PRs must carry provenance (model, tool, promptHash, timestamp)
+    type: provenance               # provenance-based
+    spec:
+      requireAttribution: true
+      fields: [model, tool, promptHash, timestamp]
+    enforcement: soft-mandatory
+    override:
+      requiredRole: tech-lead
+      requiresJustification: true
+
+  # ── GATE: Quality (Test → Deploy) ──────────────────────────────────
+  - id: quality-coverage-diff
+    description: Coverage of new/changed lines ≥ 80%
+    type: metric
+    spec:
+      metric: coverage.diff
+      min: 0.80
+    enforcement: advisory          # promote to soft once stable
+
+  - id: quality-sast-critical
+    description: SAST/dependency scan must have zero critical findings
+    type: tool
+    spec:
+      run: security-scan
+      maxFindings:
+        critical: 0
+        high: 0
+    enforcement: hard-mandatory    # 45% of AI samples are flawed — no skipping
+
+  - id: quality-human-review
+    description: Medium+ tasks (complexity ≥ 4) need ≥ 1 human reviewer
+    type: reviewer
+    spec:
+      minReviewers: 1
+      applyWhen:
+        taskComplexity: ">=4"
+      reviewerMustDifferFromAuthor: true
+    enforcement: soft-mandatory    # ALWAYS soft to keep a controlled crunch path
+    override:
+      requiredRole: tech-lead
+      requiresJustification: true
+
+  - id: quality-cross-harness-review
+    description: AI reviewers must be from a different harness than the builder
+    type: provenance
+    spec:
+      requireReviewerIndependence: true
+    enforcement: advisory          # promote to soft with multi-model review infra
+
+  - id: quality-evals-in-band
+    description: Evals pass rate within band (≥ eval-suite threshold)
+    type: metric
+    spec:
+      metric: evals.pass_rate
+      min: 0.90
+    enforcement: advisory
+
+  - id: quality-no-new-dependency-unlisted
+    description: Agents must not add dependencies outside the AGENTS.md allowlist
+    type: tool
+    spec:
+      run: dependency-diff
+      allowlistFile: AGENTS.md#dependencies
+    enforcement: soft-mandatory
+
+  # ── GATE: Deploy (Deploy → Maintain) ───────────────────────────────
+  - id: deploy-human-approval
+    description: Production deploys require human approval via hook (never automatic)
+    type: reviewer
+    spec:
+      minReviewers: 1
+      requiredRole: release-manager
+    enforcement: hard-mandatory
+
+  - id: deploy-rollback-plan
+    description: Deployment-touching PRs must have a rollback plan in plan.md
+    type: documentation
+    spec:
+      requireFields: [plan.rollback]
+      applyWhen:
+        paths: ["migrations/**", "infra/**"]
+    enforcement: advisory
+
+  # ── GATE: Security extension (see docs/en/08-security.md) ──────────
+  - id: security-dast-critical
+    description: DAST scan of the deployed environment finds zero critical/high
+    type: tool
+    spec:
+      run: dast-scan            # against staging, pre-release
+      maxFindings:
+        critical: 0
+        high: 0
+    enforcement: soft-mandatory
+    override:
+      requiredRole: security-lead
+      requiresJustification: true
+
+  - id: security-sbom-required
+    description: Builds must produce an SBOM (CycloneDX/SPDX) attached to the release
+    type: tool
+    spec:
+      run: sbom-generate
+      requireArtifact: sbom.json
+    enforcement: soft-mandatory
+
+  - id: security-artifact-signed
+    description: Release artifacts carry signing provenance (SLSA-style)
+    type: provenance
+    spec:
+      requireSigning: true      # e.g. sigstore/cosign
+    enforcement: advisory       # promote as tooling matures
+
+  - id: security-vuln-sla-critical
+    description: No known critical vulnerability older than its SLA (7 days) in deployable artifacts
+    type: metric
+    spec:
+      metric: vuln.age_days.critical
+      max: 7
+    enforcement: hard-mandatory
+
+  - id: security-container-scan
+    description: Container images scanned; zero critical findings
+    type: tool
+    spec:
+      run: image-scan
+      maxFindings:
+        critical: 0
+    enforcement: soft-mandatory
+
+  - id: security-pentest-freshness
+    description: Internet-facing surface has a pen-test no older than 12 months
+    type: metric
+    spec:
+      metric: pentest.age_months
+      max: 12
+    enforcement: advisory
+
+  # ── GATE: Docs & UX extension (docs/en/09-discovery-ux.md) ────────
+  - id: docs-ship-with-feature
+    description: User-facing behavior changes must include matching docs updates in the same PR
+    type: documentation
+    spec:
+      requireFiles: ["docs/**"]      # when the diff carries the user-facing label
+      applyWhen:
+        labels: [user-facing]
+    enforcement: soft-mandatory
+    override:
+      requiredRole: tech-lead
+      requiresJustification: true
+
+  - id: usability-ready
+    description: User-facing FRs backed by a tested prototype or a measurement plan
+    type: documentation
+    spec:
+      requireFields: [spec.usability]
+      applyWhen:
+        userFacing: true
+    enforcement: advisory
+
+  # ── GATE: Versioning (docs/en/10-delivery-ops.md §2) ──────────────
+  - id: semver-consistent
+    description: Version bump matches the change type (breaking=major, feature=minor, fix=patch)
+    type: tool
+    spec:
+      run: semver-check              # compares proposed bump against diff classification
+    enforcement: advisory
+
+# Implementation notes:
+# - Field names follow this kit's illustration; if you use the standard
+#   ai-sdlc.org runtime, align with the v1alpha1 schema.
+# - Set different thresholds for AI vs human via scope.authorTypes instead of
+#   duplicating gates (docs/en/04-gates-policy.md section 3).
+# - Review monthly: a gate failing 0% or 100% of the time → fix or delete.

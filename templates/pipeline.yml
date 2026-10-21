@@ -1,0 +1,84 @@
+# pipeline.yml — Pipeline definition for an issue/task
+# Declarative style after ai-sdlc.io (Pipeline resource), modeling the
+# Microsoft flow: implement → review → deploy, each stage with gates,
+# timeouts, short-lived credentials and its own failure strategy
+# (docs/en/06-toolchain.md).
+
+apiVersion: ai-sdlc.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: task-pipeline
+spec:
+
+  trigger:
+    event: issue.assigned            # issue assigned (labeled ai-eligible)
+    filter:
+      labels: [ai-eligible]
+
+  providers:                          # adapters — swap tools by editing only this
+    issueTracker: { type: github-issues }
+    sourceControl: { type: github }
+    ciPipeline:     { type: github-actions }
+    codeAnalysis:   { type: semgrep }
+    messenger:      { type: slack }
+
+  branching:
+    pattern: "ai-sdlc/issue-{issueNumber}"     # 1 task = 1 branch = 1 PR
+    prTemplate: .github/PULL_REQUEST_TEMPLATE.md
+
+  stages:
+
+    - name: implement
+      agentRole: builder             # declared in AgentRole (model per docs/en/06)
+      execution:
+        sandbox: container           # isolated; no real credentials
+        credentials:
+          scope: [read-repo, write-branch]
+          ttl: PT2H                  # short-lived, auto-revoked
+          revokeOnComplete: true
+      constraints:
+        maxFilesChanged: 10
+        maxPrLines: 500              # per autonomy-policy.yml
+        budget:
+          maxCostPerTask: 50         # USD — abort on breach (docs/en/05 group 4)
+      failureStrategy:
+        on: [test-failure, timeout]
+        action: retry
+        maxRetries: 3
+        backoff: PT2M
+
+    - name: review
+      parallelReviewers:             # cross-harness — different family from builder
+        - agentRole: reviewer-a      # e.g. OpenAI family
+        - agentRole: reviewer-b      # e.g. Anthropic family
+      humanReview:
+        required: complexity>=4      # medium+ tasks require a human reviewer
+      gates: [build-ci-green, quality-sast-critical, quality-coverage-diff,
+              quality-human-review, build-attribution]
+      failureStrategy:
+        on: [gate-failure]
+        action: pause                # agent fixes within the iteration budget, then reruns
+
+    - name: deploy
+      approvals:
+        - role: release-manager
+          blocking: true             # hook holds the release for a human (hard gate)
+          timeout: PT24H             # past the deadline → cancel, never auto-run
+      rollout:
+        strategy: canary
+        steps: [5, 25, 100]          # % of traffic
+      gates: [deploy-human-approval, deploy-rollback-plan]
+      failureStrategy:
+        on: [deploy-error, metric-regression]
+        action: rollback
+        notify: messenger
+
+  observability:
+    traces: true                     # spans: pipeline.stage → agent.task → gate.evaluation
+    metrics: [ai_sdlc.task.*, ai_sdlc.human.*, ai_sdlc.code.*, ai_sdlc.autonomy.*]
+    provenance: required             # model, tool, promptHash, timestamp
+
+# Notes: field names follow this kit's illustration; when using the standard
+# runtime (ai-sdlc.org), align with the v1alpha1 schema. You can add a
+# "maintain" stage running the SRE agent on a schedule/alert webhook
+# (docs/en/06-toolchain.md section 4.4).

@@ -1,0 +1,96 @@
+# autonomy-policy.yml — Agent autonomy level policy
+# Per the ai-sdlc.io earn-by-evidence model (docs/en/03-org-autonomy.md section 3).
+# Inviolable rule: NEVER set initialLevel > 1.
+
+apiVersion: ai-sdlc.dev/v1alpha1
+kind: AutonomyPolicy
+metadata:
+  name: default-agents
+spec:
+
+  # New agents always enter at L1 (or L0 to observe first)
+  initialLevel: 1
+
+  # ── Levels ──────────────────────────────────────────────────────────
+  levels:
+    - level: 0                    # Observer — read-only
+      capabilities: [read]
+      approvals: { all: human }
+      minDuration: 2w
+
+    - level: 1                    # Junior — draft PRs, all merges via humans
+      capabilities: [read, draft-pr, comment, run-tests]
+      approvals: { all: human }
+      constraints:
+        maxPrLines: 200
+        blockedPaths: ["src/api/auth/**", "src/payment/**", "migrations/**"]
+      minDuration: 4w
+
+    - level: 2                    # Senior — autonomous, sensitive parts reviewed
+      capabilities: [read, branch, pr, comment, run-tests, run-lint, run-build]
+      approvals: { default: notify, security-critical: human }
+      constraints:
+        maxPrLines: 500
+        blockedPaths: ["src/payment/**"]     # narrower than L1
+      minDuration: 8w
+
+    - level: 3                    # Principal — merge non-critical, deploy staging
+      capabilities: [all-of-level-2, merge-non-critical, deploy-staging]
+      approvals: { default: none, architecture: human }
+      constraints:
+        maxPrLines: 1000
+      validation: continuous
+
+  # ── Promotion criteria (ALL must hold; current-level performance only) ──
+  promotions:
+    - from: 1
+      to: 2
+      requiredMetrics:
+        pr-approval-rate:   { gte: 0.90 }
+        rollback-rate:      { lte: 0.02 }
+        avg-review-iterations: { lte: 1.5 }
+        security-incidents:   { eq: 0 }
+        production-incidents: { eq: 0 }
+        coverage-maintained:  { gte: 0.80 }
+      minTasksAtLevel: 50
+      minDurationAtLevel: 4w
+      requiredApprovals: [engineering-manager, security-lead]
+
+    - from: 2
+      to: 3
+      requiredMetrics:
+        pr-approval-rate:   { gte: 0.95 }
+        rollback-rate:      { lte: 0.01 }
+        avg-review-iterations: { lte: 1.5 }
+        security-incidents:   { eq: 0 }
+        production-incidents: { eq: 0 }
+        coverage-maintained:  { gte: 0.80 }
+      minTasksAtLevel: 100
+      minDurationAtLevel: 8w
+      requiredApprovals: [engineering-manager, security-lead]
+
+  # ── AUTOMATIC & IMMEDIATE demotion ─────────────────────────────────
+  demotions:
+    - trigger: critical-security-incident
+      action: demote-to-0
+      cooldown: 4w
+    - trigger: unauthorized-access-attempt
+      action: demote-to-0
+      cooldown: 4w
+    - trigger: rollback-rate-exceeds-5-percent
+      action: demote-one-level
+      cooldown: 2w
+    - trigger: quality-degradation-two-cycles
+      action: demote-one-level
+      cooldown: 2w
+
+  # During cooldown: promotion reviews pause, task counters reset to zero,
+  # and a notification MUST be sent: agent, level from → to, trigger, cooldown length.
+
+  # ── Complexity routing (docs/en/03-org-autonomy.md section 4) ──────
+  routing:
+    complexityThresholds:
+      fully-autonomous: { max: 3, requiresLevel: 2 }
+      ai-with-review:   { max: 6 }          # default
+      ai-assisted:      { max: 8 }
+      human-led:        { max: 10 }         # agents MUST NOT change anything
