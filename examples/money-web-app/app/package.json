@@ -14,7 +14,7 @@
     "example"
   ],
   "author": "",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "type": "module",
   "dependencies": {
     "hash-wasm": "^4.12.0"

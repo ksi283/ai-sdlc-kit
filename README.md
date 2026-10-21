@@ -124,6 +124,10 @@ Tổng hợp, so sánh và nguồn bổ trợ: `docs/vi/01-research-synthesis.md
 - Áp dụng **theo mô-đun**: bắt đầu từ các "play" không điều kiện tiên quyết (`docs/*/07-adoption.md`).
 - Mẫu trong `templates/` đều có **ghi chú hướng dẫn** (đoạn `<!-- ... -->`) — xóa khi dùng thật.
 
+## 9. Giấy phép
+
+Toàn bộ repo phát hành theo **[Apache License 2.0](LICENSE)** — bạn được tự do sử dụng, sửa đổi và phân phối (kèm các điều khoản ghi nguồn và bảo hộ bằng sáng chế theo license). Các nguồn tham khảo (Anthropic, Microsoft, ai-sdlc.io) được trích dẫn ở mục 7 chỉ nhằm mục đích học tập; kit này là tác phẩm độc lập, không sao chép mã nguồn từ các nguồn đó.
+
 ---
 
 *Hai file README này được giữ đồng bộ nội dung: [🇻🇳 Tiếng Việt](README.md) · [🇬🇧 English](README.en.md). Tài liệu phục vụ học tập và áp dụng nội bộ; số liệu trích dẫn có nguồn đầy đủ trong `docs/vi/01-research-synthesis.md`.*

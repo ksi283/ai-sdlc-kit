@@ -124,6 +124,10 @@ Full synthesis, comparison and further reading: `docs/en/01-research-synthesis.m
 - Adopt **modularly**: start from the no-prerequisite plays (`docs/*/07-adoption.md`).
 - Templates carry **guidance notes** (`<!-- ... -->` blocks) — delete them when using for real.
 
+## 9. License
+
+Released under the **[Apache License 2.0](LICENSE)** — you are free to use, modify and distribute it (subject to the attribution terms and the patent grant in the license). The references (Anthropic, Microsoft, ai-sdlc.io) cited in section 7 are for study purposes; this kit is an independent work and contains no source code copied from them.
+
 ---
 
 *These two READMEs are kept in sync: [🇻🇳 Tiếng Việt](README.md) · [🇬🇧 English](README.en.md). For study and internal adoption; all cited figures are sourced in `docs/en/01-research-synthesis.md`.*
