@@ -4,7 +4,7 @@
 
 > An AI-augmented / AI-native software development lifecycle framework — synthesized and designed from leading references, with a ready-to-use template set and a runnable reference app for verification.
 
-**Version:** 1.3 · **Date:** 2026-10-22
+**Version:** 1.5 · **Date:** 2026-10-22
 
 ---
 
@@ -53,8 +53,8 @@ AI has inverted the economics of software development:
 |---|---|
 | [`README.md`](README.md) | **Vietnamese** — the default shown on GitHub |
 | `README.en.md` (this file) | English — mirrored content, kept in sync |
-| `docs/vi/` (11 guides) | Vietnamese, each file cross-links its English twin |
-| `docs/en/` (11 guides) | English |
+| `docs/vi/` (13 guides) | Vietnamese, each file cross-links its English twin |
+| `docs/en/` (13 guides) | English |
 | `templates/` + `examples/` | **English only** — these are the artifacts used in real project repos (code, PRs, specs, policy) |
 
 ## 4. Repository layout
@@ -70,12 +70,21 @@ ai-sdlc/
 │       04 gates & policy · 05 metrics · 06 toolchain
 │       07 adoption · 08 security & DevSecOps
 │       09 discovery & UX · 10 delivery ops · 11 portfolio
+│       12 installation & onboarding · 13 v2 multi-user roadmap
+├── cli/                       # zero-dep CLI: init my-app / check / skill (runs via npx github:…)
+│   └── ai-sdlc-kit.mjs
+├── skills/                    # skill-pack mechanism: registry + install.sh (auto-activation)
+│   ├── registry.yml           # neutral catalog: version pins, licenses, auto_activate
+│   ├── install.sh             # install a pack into a project + wire routing into AGENTS.md
+│   ├── intent-review/         # kit-authored skill (local-pack example)
+│   └── _template/             # scaffold for your own skills
 ├── templates/                 # 13 ready-to-use files — ENGLISH ONLY
 │   ├── intent.md · spec.md · plan.md · AGENTS.md · evals.md
 │   ├── quality-gates.yml · autonomy-policy.yml · pipeline.yml
 │   ├── pr-template.md · threat-model.md · priority-scorecard.md
 │   └── adr.md · postmortem-to-intent.md
-└── examples/
+├── .github/workflows/tests.yml # CI: gate battery on every push/PR
+└── examples/                  # PROCESS WALKTHROUGHS ONLY — not for production deployment
     ├── mini-todo-api/         # "first run" walkthrough (EN)
     └── money-web-app/         # security-heavy walkthrough: auth + money data (EN)
         └── app/               # RUNNABLE APP (npm start / npm test)
@@ -97,6 +106,10 @@ ai-sdlc/
 | Prioritization, capacity, vendor/model governance | `docs/en/11-portfolio.md` + `templates/priority-scorecard.md` |
 | See a small project run the full lifecycle | `examples/mini-todo-api/` |
 | See a security-heavy run + the runnable app | `examples/money-web-app/` |
+| Hand the kit to someone else / self-serve from zero | `docs/en/12-onboarding.md` |
+| Cài kit vào project mới bằng CLI | `npx github:ksi283/ai-sdlc-kit init my-app` — chi tiết `cli/README.md` |
+| Install skill packs (UI/UX…) into your project | `skills/README.md` + `skills/registry.yml` |
+| Whole team on one kit without chaos (v2 plan) | `docs/en/13-roadmap-v2.md` |
 
 **Fastest path (30 min):** read `docs/en/02-framework.md` → copy `templates/intent.md` + `templates/AGENTS.md` into your repo → run one small feature through the six stages.
 
@@ -108,7 +121,7 @@ npm install && npm start     # → http://localhost:3000 (money-tracking web app
 npm test                     # 22 tests = the gate battery: FR-1..3, SR-1..6, evals
 ```
 
-The run results, mapped requirement by requirement, are in [`examples/money-web-app/app/RUN-REPORT.md`](examples/money-web-app/app/RUN-REPORT.md) — including the three real bugs the test battery caught along the way.
+The run results, mapped requirement by requirement, are in [`examples/money-web-app/app/RUN-REPORT.md`](examples/money-web-app/app/RUN-REPORT.md) — including the three real bugs the test battery caught along the way. GitHub Actions re-runs this battery on every push/PR (currently green). The app's UI/UX was upgraded with the `ui-ux-pro-max` skill pack — before/after evaluation with screenshots in [`examples/money-web-app/app/UI-UX-EVALUATION.md`](examples/money-web-app/app/UI-UX-EVALUATION.md).
 
 ## 7. Primary references
 

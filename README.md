@@ -4,7 +4,7 @@
 
 > Khung quy trình phát triển phần mềm tăng cường bằng AI (AI-augmented / AI-native SDLC) — tổng hợp, thiết kế từ các nguồn tham khảo hàng đầu, kèm bộ template dùng ngay và một ứng dụng mẫu chạy được để kiểm chứng.
 
-**Phiên bản:** 1.3 · **Ngày:** 2026-10-22
+**Phiên bản:** 1.5 · **Ngày:** 2026-10-22
 
 ---
 
@@ -53,8 +53,8 @@ AI đã đảo ngược nền kinh tế của phát triển phần mềm:
 |---|---|
 | `README.md` (file này) | **Tiếng Việt** — mặc định |
 | [`README.en.md`](README.en.md) | Tiếng Anh — bản song song, nội dung tương đương |
-| `docs/vi/` (11 hướng dẫn) | Tiếng Việt, mỗi file có liên kết sang bản Anh |
-| `docs/en/` (11 guides) | Tiếng Anh |
+| `docs/vi/` (13 hướng dẫn) | Tiếng Việt, mỗi file có liên kết sang bản Anh |
+| `docs/en/` (13 guides) | Tiếng Anh |
 | `templates/` + `examples/` | **Tiếng Anh** — đây là artifact dùng thật trong repo dự án (code, PR, spec, policy) |
 
 ## 4. Cấu trúc thư mục
@@ -70,12 +70,21 @@ ai-sdlc/
 │       04 gates & chính sách · 05 metrics · 06 công cụ
 │       07 lộ trình · 08 bảo mật & DevSecOps
 │       09 discovery & UX · 10 vận hành giao hàng · 11 portfolio
+│       12 cài đặt & onboarding · 13 kế hoạch v2 đa thành viên
+├── cli/                       # CLI zero-dep: init my-app / check / skill (chạy qua npx github:…)
+│   └── ai-sdlc-kit.mjs
+├── skills/                    # cơ chế skill packs: registry + install.sh (auto-activation)
+│   ├── registry.yml           # catalog trung lập: version pin, license, auto_activate
+│   ├── install.sh             # cài pack vào project + tự sinh block routing vào AGENTS.md
+│   ├── intent-review/         # skill do kit tự viết (mẫu local pack)
+│   └── _template/             # khung khởi tạo skill của riêng bạn
 ├── templates/                 # 13 file dùng ngay — TIẾNG ANH
 │   ├── intent.md · spec.md · plan.md · AGENTS.md · evals.md
 │   ├── quality-gates.yml · autonomy-policy.yml · pipeline.yml
 │   ├── pr-template.md · threat-model.md · priority-scorecard.md
 │   └── adr.md · postmortem-to-intent.md
-└── examples/
+├── .github/workflows/tests.yml # CI: gate battery chạy trên mọi push/PR
+└── examples/                  # CHỈ ĐỂ TEST LUỒNG — không deploy production
     ├── mini-todo-api/         # ví dụ "chạy lần đầu" (EN)
     └── money-web-app/         # ví dụ nặng bảo mật: auth + dữ liệu tiền (EN)
         └── app/               # ỨNG DỤNG CHẠY ĐƯỢC (npm start / npm test)
@@ -97,6 +106,10 @@ ai-sdlc/
 | Ưu tiên hóa, năng lực, quản trị vendor/mô hình | `docs/vi/11-portfolio.md` + `templates/priority-scorecard.md` |
 | Xem dự án nhỏ chạy đủ vòng đời | `examples/mini-todo-api/` |
 | Xem vòng đời nặng bảo mật + app chạy thật | `examples/money-web-app/` |
+| Đưa kit cho người khác / tự triển khai từ đầu | `docs/vi/12-onboarding.md` |
+| Cài kit vào project mới bằng CLI | `npx github:ksi283/ai-sdlc-kit init my-app` — chi tiết `cli/README.md` |
+| Cài skill packs (UI/UX…) cho project của bạn | `skills/README.md` + `skills/registry.yml` |
+| Cả team dùng chung kit mà không loạn (kế hoạch v2) | `docs/vi/13-roadmap-v2.md` |
 
 **Đường dẫn nhanh nhất (30 phút):** đọc `docs/vi/02-framework.md` → copy `templates/intent.md` + `templates/AGENTS.md` vào repo của bạn → chạy thử 1 feature nhỏ theo 6 giai đoạn.
 
@@ -108,7 +121,7 @@ npm install && npm start     # → http://localhost:3000 (web app quản lý ti�
 npm test                     # 22 test = "gate battery": FR-1..3, SR-1..6, evals
 ```
 
-Kết quả chạy thật và đối chiếu từng yêu cầu xem tại [`examples/money-web-app/app/RUN-REPORT.md`](examples/money-web-app/app/RUN-REPORT.md) — bao gồm 3 bug thật mà bộ test bắt được trong quá trình chạy.
+Kết quả chạy thật và đối chiếu từng yêu cầu xem tại [`examples/money-web-app/app/RUN-REPORT.md`](examples/money-web-app/app/RUN-REPORT.md) — bao gồm 3 bug thật mà bộ test bắt được trong quá trình chạy. CI trên GitHub Actions chạy lại bộ test này trên mọi push/PR (đã xanh). UI/UX của app được nâng cấp bằng skill pack `ui-ux-pro-max` — đánh giá trước/sau kèm ảnh chụp xem [`examples/money-web-app/app/UI-UX-EVALUATION.md`](examples/money-web-app/app/UI-UX-EVALUATION.md).
 
 ## 7. Nguồn tham khảo chính
 
