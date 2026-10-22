@@ -9,7 +9,7 @@
 
 1. **Install** the skill into the project: `npx ui-ux-pro-max-cli init --ai claude` → `.claude/skills/` (7 sub-skills, 4.5 MB, MIT).
 2. **Search** design intelligence: style (3 candidates), color (Fintech/Crypto), typography (Dashboard Data).
-3. **Decide** (reasoning layer): data-dense-dashboard + inclusive-design overlay; override the auto-generated MASTER.md (mismatched lifestyle style) — recorded in [DESIGN-SYSTEM.md](../DESIGN-SYSTEM.md).
+3. **Decide** (reasoning layer): data-dense-dashboard + inclusive-design overlay; override the auto-generated MASTER.md (mismatched lifestyle style) — recorded in [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md).
 4. **Implement**: token-based CSS rewrite of `src/views/layout.js`, SVG logo, semantic classes.
 5. **Verify**: 22/22 gate tests green + before/after screenshots at 1280px and 375px.
 

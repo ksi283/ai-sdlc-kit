@@ -1,9 +1,27 @@
-# Skills registry — approved optional capability packs.
-# Every entry: exact version pin, license, install command, review notes.
-# Installed packs are NOT committed (see skills/README.md rule 3).
+# Skills registry — catalog of approved capability packs.
+#
+# CLASS: external  → third-party installable pack; installed by ITS OWN installer
+#                    into whatever project needs it. The kit only records what the
+#                    pack is, its pinned version, and its license.
+# CLASS: local     → user-developed skill; SOURCE lives in this repo under
+#                    skills/<name>/ (or any path the user declares). Installed into
+#                    a project by skills/install.sh.
+#
+# The registry is PROJECT-AGNOSTIC by design: it never says which project a pack
+# is "for". Where a pack was used, and what its use produced, is recorded on the
+# PROJECT side (e.g. the project's DESIGN-SYSTEM.md / AGENTS.md).
+#
+# AUTO-ACTIVATION: every entry declares `auto_activate` — the capability it provides,
+# the lifecycle stages that should reach for it, and concrete use-when triggers.
+# skills/install.sh writes these routings into the project's AGENTS.md (auto block),
+# so every agent session proactively loads the right pack for the right work.
+# Agents with native skill discovery also read the pack's own SKILL.md description.
 
 packs:
+
+  # ── external packs ──────────────────────────────────────────────────
   - name: ui-ux-pro-max
+    class: external
     source: https://github.com/nextlevelbuilder/ui-ux-pro-max-skill
     version: "2.15.0"
     license: MIT
@@ -11,19 +29,48 @@ packs:
       Design intelligence for UI/UX work: 79 styles, 192 product palettes,
       74 font pairings, UX guidelines, pre-delivery checklists (contrast,
       focus states, reduced motion, responsive breakpoints).
+    auto_activate:
+      capability: ui-ux-design
+      lifecycle_stages: [design, build, maintain]
+      use_when:
+        - designing, building, reviewing or fixing screens, components or layouts
+        - choosing colors, typography, spacing, imagery, visual style
+        - accessibility passes (contrast, focus states, reduced motion, responsive)
+      not_for:
+        - backend logic, API or database design
+        - CI, security gates, infrastructure
     install:
-      # per-project (recommended for kit projects):
-      cmd: npx -y ui-ux-pro-max-cli@2.15.0 init --ai claude
-      lands-in: .claude/skills/          # also supports --ai cursor|codex|gemini|all …
-      # machine-global alternative:
-      global_cmd: npm install -g ui-ux-pro-max-cli@2.15.0 && uipro init --ai claude --global
+      cmd: npx -y ui-ux-pro-max-cli@2.15.0 init --ai <agent>
+      agents: [claude, cursor, codex, gemini, copilot, all]   # see pack docs for the full list
+      lands-in: .claude/skills/  |  .cursor/skills/  |  … (per --ai)
+      global_variant: npm install -g ui-ux-pro-max-cli@2.15.0 && uipro init --ai claude --global
     requirements:
       python: ">=3.9 (stdlib only — search scripts make no network calls)"
     security_review:
       date: 2026-10-22
       network_calls: none (local CSV search engine)
-      files_generated: ".claude/skills/**, .claude/design-system/** (both gitignored)"
-    first_used_on: examples/money-web-app (UI/UX upgrade, see app/UI-UX-EVALUATION.md)
-    outputs_to_commit:
-      - DESIGN-SYSTEM.md (project-owned decisions + provenance)
-      - screenshots of the evaluated result
+      files_generated: ".claude/skills/**, .claude/design-system/** (gitignored — install per project, commit only reviewed outputs)"
+
+  # ── local packs (user-developed; source of truth in this repo) ─────
+  - name: intent-review
+    class: local
+    source: skills/intent-review/          # SKILL.md — scaffold new skills from skills/_template/
+    version: "0.1.0"
+    license: Apache-2.0 (inherits the kit)
+    purpose: Enforce the Intent-Ready gate — evidence, measurable metric, non-goals, security screen, human owner.
+    auto_activate:
+      capability: intent-review
+      lifecycle_stages: [plan]
+      use_when:
+        - drafting, editing or reviewing an intent.md
+        - converting incidents/postmortems into new intents
+      not_for:
+        - spec review (DoR gate) or task complexity routing
+    install:
+      cmd: skills/install.sh intent-review <project-dir> --ai <agent>
+      lands-in: <project-dir>/.claude/skills/intent-review/  (per --ai mapping)
+    update_flow: edit source here → PR → re-run install.sh in each project (idempotent copy
+      + AGENTS.md auto-block refresh)
+
+  # To publish your own skill: copy skills/_template/ to skills/<name>/, fill it in,
+  # add an entry shaped like the one above, then PR. install.sh handles the rest.
