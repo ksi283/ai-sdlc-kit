@@ -2,11 +2,12 @@
 // ai-sdlc-kit CLI — scaffold and verify AI-SDLC projects. Node >= 18, stdlib only.
 // Runs from a clone (node cli/ai-sdlc-kit.mjs …) or via npx github:ksi283/ai-sdlc-kit.
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const KIT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const VERSION = '1.6.0';
+const VERSION = '1.7.0';
 const T = (p) => join(KIT_ROOT, 'templates', p);
 const S = (p) => join(KIT_ROOT, 'skills', p);
 
@@ -33,6 +34,12 @@ Usage:
   ai-sdlc-kit skill <pack> <dir> [--agent …]
       Install one registry pack into a project (same rules as skills/install.sh).
 
+  ai-sdlc-kit update [dir] [--dry-run] [--force]
+      Bring a scaffolded project up to the current kit. Kit-owned files are
+      updated only when unmodified (hash-checked via .ai-sdlc-kit.json);
+      project-modified files are kept, missing files restored, skills
+      refreshed and the AGENTS.md routing block rewired.
+
   ai-sdlc-kit --help | --version
       --lang vi|en switches this help and progress messages (default: en).
 
@@ -57,6 +64,12 @@ Cách dùng:
 
   ai-sdlc-kit skill <pack> <dir> [--agent …]
       Cài một pack từ registry vào project (cùng quy tắc với skills/install.sh).
+
+  ai-sdlc-kit update [dir] [--dry-run] [--force]
+      Nâng project đã scaffold lên phiên bản kit hiện tại. File do kit sở hữu
+      chỉ được cập nhật khi CHƯA bị project chỉnh sửa (so hash qua
+      .ai-sdlc-kit.json); file đã chỉnh được giữ nguyên, file thiếu được
+      khôi phục, skills làm mới và block routing AGENTS.md nối lại.
 
   ai-sdlc-kit --help | --version
       --lang vi|en đổi ngôn ngữ help và thông báo tiến trình (mặc định: en).
@@ -204,6 +217,50 @@ function printExternalPack(pack) {
   console.log(STR.external(pack.name, pack.version ?? ''));
 }
 
+// ── kit-owned scaffold set — shared by init & update ────────────────────
+const MANIFEST = '.ai-sdlc-kit.json';
+const AGENT_DIRS = {
+  claude: '.claude/skills', cursor: '.cursor/skills', codex: '.agents/skills', zcode: '.zcode/skills',
+};
+
+function scaffoldFiles() {
+  return [
+    // AGENTS.md is scaffolded once but is PROJECT MEMORY afterwards — the
+    // project is meant to edit it (and the skills wiring appends to it).
+    // update must never manage it beyond the auto-block rewiring.
+    { rel: 'AGENTS.md', src: T('AGENTS.md'), projectOwned: true },
+    { rel: 'docs/templates/intent.md', src: T('intent.md') },
+    { rel: 'docs/templates/spec.md', src: T('spec.md') },
+    { rel: 'docs/templates/plan.md', src: T('plan.md') },
+    { rel: 'docs/templates/evals.md', src: T('evals.md') },
+    { rel: 'docs/templates/threat-model.md', src: T('threat-model.md') },
+    { rel: 'policy/quality-gates.yml', src: T('quality-gates.yml') },
+    { rel: 'policy/autonomy-policy.yml', src: T('autonomy-policy.yml') },
+    { rel: '.github/PULL_REQUEST_TEMPLATE.md', src: T('pr-template.md') },
+    { rel: '.github/workflows/tests.yml', content: scaffoldWorkflow() },
+    { rel: '.github/CODEOWNERS', content: CODEOWNERS },
+  ];
+}
+
+const sha = (s) => createHash('sha256').update(s, 'utf8').digest('hex');
+const kitFileContent = (f) => f.content ?? readFileSync(f.src, 'utf8');
+
+function writeManifest(dir, manifest) {
+  writeFileSync(join(dir, MANIFEST), JSON.stringify(manifest, null, 2) + '\n');
+}
+
+function readManifest(dir) {
+  const p = join(dir, MANIFEST);
+  if (!existsSync(p)) {
+    fail(`no ${MANIFEST} in '${dir}' — not a scaffolded project (or scaffolded before 1.7.0). Re-run 'init' with --force, or port the kit version by hand.`);
+  }
+  try {
+    return JSON.parse(readFileSync(p, 'utf8'));
+  } catch (e) {
+    fail(`cannot parse ${MANIFEST}: ${e.message}`);
+  }
+}
+
 // ── init ────────────────────────────────────────────────────────────────
 function doInit(args) {
   const dir = resolve(args[0] ?? '');
@@ -221,33 +278,26 @@ function doInit(args) {
     ai = 'claude';
     console.log(`note: no --agent given — defaulting to claude (.claude/skills/). Pass --agent claude|cursor|codex|zcode to choose the target.`);
   }
-  const agentDir = { claude: '.claude/skills', cursor: '.cursor/skills', codex: '.agents/skills', zcode: '.zcode/skills' }[ai]
-    ?? fail(`unknown --agent '${ai}' (claude|cursor|codex|zcode)`);
+  const agentDir = AGENT_DIRS[ai] ?? fail(`unknown --agent '${ai}' (claude|cursor|codex|zcode)`);
   if (existsSync(dir) && readdirSync(dir).length && !force) {
     fail(`'${dir}' is not empty — use --force to scaffold into it anyway`);
   }
   // fail fast on unknown packs BEFORE writing anything
   const { rows, packs } = skillRows(skills);
 
-  const files = [
-    [T('AGENTS.md'), 'AGENTS.md'],
-    [T('intent.md'), 'docs/templates/intent.md'],
-    [T('spec.md'), 'docs/templates/spec.md'],
-    [T('plan.md'), 'docs/templates/plan.md'],
-    [T('evals.md'), 'docs/templates/evals.md'],
-    [T('quality-gates.yml'), 'policy/quality-gates.yml'],
-    [T('autonomy-policy.yml'), 'policy/autonomy-policy.yml'],
-    [T('pr-template.md'), '.github/PULL_REQUEST_TEMPLATE.md'],
-    [T('threat-model.md'), 'docs/templates/threat-model.md'],
-  ];
+  const files = scaffoldFiles();
   console.log(STR.scaffolding(dir, ai, skills.join(', '), dry));
   if (!dry) {
     mkdirSync(dir, { recursive: true });
-    for (const [src, rel] of files) {
-      const dest = join(dir, rel);
+    const baselines = {};
+    for (const f of files) {
+      if (f.projectOwned) continue;
+      const dest = join(dir, f.rel);
       mkdirSync(dirname(dest), { recursive: true });
-      cpSync(src, dest);
-      console.log(`  ${rel}`);
+      const content = kitFileContent(f);
+      writeFileSync(dest, content);
+      baselines[f.rel] = sha(content);
+      console.log(`  ${f.rel}`);
     }
     for (const rel of ['docs/intents/.gitkeep', 'specs/.gitkeep', 'evals/suites/.gitkeep']) {
       const dest = join(dir, rel);
@@ -255,15 +305,19 @@ function doInit(args) {
       writeFileSync(dest, '');
       console.log(`  ${rel}`);
     }
-    mkdirSync(join(dir, '.github', 'workflows'), { recursive: true });
-    writeFileSync(join(dir, '.github', 'workflows', 'tests.yml'), scaffoldWorkflow());
-    console.log('  .github/workflows/tests.yml');
-    writeFileSync(join(dir, '.github', 'CODEOWNERS'), CODEOWNERS);
-    console.log('  .github/CODEOWNERS');
+    const manifest = {
+      kitVersion: VERSION,
+      scaffoldedAt: new Date().toISOString(),
+      agent: ai,
+      skills: packs.map((p) => ({ name: p.name, version: p.version ?? '', class: p.class })),
+      files: baselines,
+    };
+    writeManifest(dir, manifest);
+    console.log(`  ${MANIFEST} (kit ${VERSION} — commit this file; 'update' uses its baselines)`);
   } else {
-    for (const [, rel] of files) console.log(`  ${rel}`);
+    for (const f of files) console.log(`  ${f.rel}`);
     console.log('  docs/intents/.gitkeep · specs/.gitkeep · evals/suites/.gitkeep');
-    console.log('  .github/workflows/tests.yml · .github/CODEOWNERS');
+    console.log(`  ${MANIFEST}`);
   }
 
   if (skills.length) {
@@ -296,6 +350,17 @@ function doCheck(args) {
   const ok = rows.filter(([, v]) => v).length;
   for (const [label, v] of rows) console.log(` ${v ? '✔' : '✗'} ${label}`);
   console.log(`\n${ok}/${rows.length} wiring checks pass${ok === rows.length ? ' — ready.' : ' — see docs/en/12-onboarding.md for each fix.'}`);
+  // kit staleness is informational — never fails check
+  if (existsSync(join(dir, MANIFEST))) {
+    try {
+      const m = JSON.parse(readFileSync(join(dir, MANIFEST), 'utf8'));
+      if (m.kitVersion && m.kitVersion !== VERSION) {
+        console.log(` note: kit update available (${m.kitVersion} → ${VERSION}) — run 'ai-sdlc-kit update ${args[0] ?? '.'}'`);
+      } else {
+        console.log(` note: kit ${VERSION} — up to date.`);
+      }
+    } catch { /* unreadable manifest — wiring checks above already speak */ }
+  }
   if (ok < rows.length) process.exit(1);
 }
 
@@ -318,6 +383,96 @@ function doSkill(args) {
   wireAgentsBlock(resolve(dir), rows);
 }
 
+// ── update ──────────────────────────────────────────────────────────────
+function doUpdate(args) {
+  const dir = resolve(args[0] ?? '.');
+  let dry = false, force = false;
+  for (let i = 1; i < args.length; i++) {
+    if (args[i] === '--dry-run') dry = true;
+    else if (args[i] === '--force') force = true;
+    else if (args[i] === '--lang') { i++; continue; }
+    else fail(`unknown option '${args[i]}'`);
+  }
+  const m = readManifest(dir);
+  const from = m.kitVersion ?? 'unknown';
+  if (from === VERSION) {
+    console.log(`'${dir}' is already at kit ${VERSION} — re-running update is safe (repairs drifted files).`);
+  } else {
+    console.log(`updating '${dir}': kit ${from} → ${VERSION}${dry ? ' (DRY RUN)' : ''}`);
+  }
+
+  const counts = { updated: 0, unchanged: 0, added: 0, skippedModified: 0 };
+  const baselines = {};
+  for (const f of scaffoldFiles()) {
+    if (f.projectOwned) continue; // project memory — only the skills auto-block is managed
+    const dest = join(dir, f.rel);
+    const content = kitFileContent(f);
+    const newHash = sha(content);
+    baselines[f.rel] = newHash;
+    if (!existsSync(dest)) {
+      counts.added++;
+      console.log(`  + ${f.rel} (missing — restored)`);
+      if (!dry) { mkdirSync(dirname(dest), { recursive: true }); writeFileSync(dest, content); }
+      continue;
+    }
+    const curHash = sha(readFileSync(dest, 'utf8'));
+    if (curHash === newHash) { counts.unchanged++; continue; }
+    const base = m.files?.[f.rel];
+    if (base && curHash !== base && !force) {
+      counts.skippedModified++;
+      console.log(`  ! ${f.rel} (modified by the project — kept; use --force to overwrite)`);
+      // baselines[f.rel] stays = the KIT hash: a modified file must remain
+      // "diverged" on every future update until resolved (manual merge or --force).
+      // Re-baselining to the project's hash here would make the NEXT update
+      // treat the file as clean kit content and overwrite it — data loss.
+      continue;
+    }
+    counts.updated++;
+    console.log(`  ↑ ${f.rel}${force && base && curHash !== base ? ' (--force overwrote a project-modified file)' : ''}`);
+    if (!dry) writeFileSync(dest, content);
+  }
+
+  // skills: refresh local packs, report external version changes, rewire AGENTS.md
+  const installed = Array.isArray(m.skills) ? m.skills : [];
+  if (installed.length) {
+    const agentDir = AGENT_DIRS[m.agent ?? 'claude'] ?? fail(`manifest has unknown agent '${m.agent}'`);
+    const packs = readRegistryPacks();
+    const names = [];
+    for (const s of installed) {
+      const p = packs.find((x) => x.name === s.name);
+      if (!p) { console.log(`  ? skill '${s.name}' is no longer in the registry — left as-is`); continue; }
+      names.push(p.name);
+      if ((p.version ?? '') !== (s.version ?? '')) {
+        console.log(`  ↑ skill ${s.name} ${s.version || '?'} → ${p.version ?? '?'}`);
+      }
+      if (p.class === 'local') { if (!dry) installLocalPack(p, dir, agentDir); }
+      else console.log(STR.external(p.name, p.version ?? ''));
+    }
+    if (names.length && !dry) {
+      const { rows } = skillRows(names);
+      wireAgentsBlock(dir, rows);
+    }
+  }
+
+  if (!dry) {
+    const packs = readRegistryPacks();
+    m.kitVersion = VERSION;
+    m.updatedAt = new Date().toISOString();
+    m.skills = installed.map((s) => {
+      const p = packs.find((x) => x.name === s.name);
+      return p ? { name: p.name, version: p.version ?? '', class: p.class } : s;
+    });
+    m.files = baselines;
+    writeManifest(dir, m);
+    console.log(`  ${MANIFEST} refreshed (kit ${VERSION})`);
+  }
+  console.log(dry ? 'dry run complete.'
+    : `done: ${counts.updated} updated · ${counts.added} restored · ${counts.unchanged} unchanged · ${counts.skippedModified} skipped (project-modified).`);
+  if (counts.skippedModified && !force) {
+    console.log("tip: skipped files keep your changes on purpose — diff them against the kit's templates/ manually, or re-run with --force.");
+  }
+}
+
 // ── dispatch ────────────────────────────────────────────────────────────
 if (cmd === '--version' || cmd === '-v') { console.log(VERSION); process.exit(0); }
 if (cmd === '--help' || cmd === '-h' || !cmd) { console.log(LANG === 'vi' ? HELP_VI : HELP_EN); process.exit(0); }
@@ -325,4 +480,5 @@ const rest = process.argv.slice(3);
 if (cmd === 'init') doInit(rest);
 else if (cmd === 'check') doCheck(rest);
 else if (cmd === 'skill') doSkill(rest);
+else if (cmd === 'update') doUpdate(rest);
 else fail(`unknown command '${cmd}' — try --help`);

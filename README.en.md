@@ -4,7 +4,7 @@
 
 **An AI-augmented software development process — core framework, ready-to-use templates, a CLI and a verified reference app.**
 
-[![version](https://img.shields.io/badge/version-1.6.0-blue)]() [![license](https://img.shields.io/badge/license-Apache--2.0-green)](LICENSE) [![node](https://img.shields.io/badge/node-%E2%89%A518-339933)]() [![docs](https://img.shields.io/badge/docs-EN%20%7C%20VI-informational)]()
+[![version](https://img.shields.io/badge/version-1.7.0-blue)]() [![license](https://img.shields.io/badge/license-Apache--2.0-green)](LICENSE) [![node](https://img.shields.io/badge/node-%E2%89%A518-339933)]() [![docs](https://img.shields.io/badge/docs-EN%20%7C%20VI-informational)]()
 
 [Tiếng Việt](README.md) · **English**
 
@@ -98,9 +98,20 @@ node cli/ai-sdlc-kit.mjs --help          # add --lang vi for Vietnamese help
 | `init <dir>` | Scaffold a project |
 | `check [dir]` | 10-point wiring report — **exit 1 when incomplete** |
 | `skill <pack> <dir>` | Install a registry pack into a project |
+| `update [dir]` | Bring a project to the current kit (project-modified files kept) |
 | `--agent <ide name>` | Target agent's skill directory (`claude` · `cursor` · `codex` · `zcode`) |
 
 Details: [`cli/README.md`](cli/README.md).
+
+### Updating the kit
+
+`init` writes `.ai-sdlc-kit.json` into your project (kit version, agent, skills, per-file baseline hashes of kit-owned files) — **commit it alongside your project**. When the kit releases a new version:
+
+```bash
+ai-sdlc-kit update my-app            # preview first: add --dry-run
+```
+
+Safe by design: unmodified files → updated; **project-modified files → kept** (reported as `skipped`, diff manually or use `--force` to overwrite); deleted files → restored; skills refreshed and the `AGENTS.md` block rewired. Re-running is idempotent.
 
 ## 4. Quick start
 

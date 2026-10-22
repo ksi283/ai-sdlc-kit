@@ -69,8 +69,8 @@ packs:
     install:
       cmd: skills/install.sh intent-review <project-dir> --agent <agent>
       lands-in: <project-dir>/.claude/skills/intent-review/  (per --ai mapping)
-    update_flow: edit source here → PR → re-run install.sh in each project (idempotent copy
-      + AGENTS.md auto-block refresh)
+    update_flow: edit source here → PR → re-run install.sh (or `ai-sdlc-kit update`) in each project
+      (idempotent copy + AGENTS.md auto-block refresh)
 
   # To publish your own skill: copy skills/_template/ to skills/<name>/, fill it in,
   # add an entry shaped like the one above, then PR. install.sh handles the rest.
@@ -92,5 +92,5 @@ packs:
     install:
       cmd: skills/install.sh spec-review <project-dir> --agent <agent>
       lands-in: <project-dir>/.claude/skills/spec-review/  (per --ai mapping)
-    update_flow: edit source here → PR → re-run install.sh in each project (idempotent copy
-      + AGENTS.md auto-block refresh)
+    update_flow: edit source here → PR → re-run install.sh (or `ai-sdlc-kit update`) in each project
+      (idempotent copy + AGENTS.md auto-block refresh)

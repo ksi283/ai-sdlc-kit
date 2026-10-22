@@ -4,7 +4,7 @@
 
 **Bộ quy trình phát triển phần mềm tăng cường AI — khung lõi, template dùng ngay, CLI và ứng dụng kiểm chứng.**
 
-[![version](https://img.shields.io/badge/version-1.6.0-blue)]() [![license](https://img.shields.io/badge/license-Apache--2.0-green)](LICENSE) [![node](https://img.shields.io/badge/node-%E2%89%A518-339933)]() [![docs](https://img.shields.io/badge/docs-EN%20%7C%20VI-informational)]()
+[![version](https://img.shields.io/badge/version-1.7.0-blue)]() [![license](https://img.shields.io/badge/license-Apache--2.0-green)](LICENSE) [![node](https://img.shields.io/badge/node-%E2%89%A518-339933)]() [![docs](https://img.shields.io/badge/docs-EN%20%7C%20VI-informational)]()
 
 **Tiếng Việt** · [English](README.en.md)
 
@@ -98,9 +98,20 @@ node cli/ai-sdlc-kit.mjs --help          # thêm --lang vi cho help tiếng Vi�
 | `init <dir>` | Scaffold project |
 | `check [dir]` | Báo cáo wiring 10 điểm — **exit 1 khi thiếu** |
 | `skill <pack> <dir>` | Cài một pack từ registry vào project |
+| `update [dir]` | Nâng project lên phiên bản kit hiện tại (giữ nguyên file project đã chỉnh) |
 | `--agent <ide name>` | Chọn thư mục skill của nền tảng nhận cài (`claude` · `cursor` · `codex` · `zcode`) |
 
 Chi tiết: [`cli/README.md`](cli/README.md).
+
+### Cập nhật kit
+
+`init` ghi `.ai-sdlc-kit.json` vào project (phiên bản kit, agent, skills, hash baseline của từng file kit sở hữu) — **commit file này cùng project**. Khi kit phát hành bản mới:
+
+```bash
+ai-sdlc-kit update my-app            # xem trước: thêm --dry-run
+```
+
+An toàn theo thiết kế: file chưa chỉnh → cập nhật; **file project đã chỉnh → giữ nguyên** (báo `skipped`, tự diff tay hoặc `--force` để ghi đè); file bị xóa → khôi phục; skills làm mới + block `AGENTS.md` nối lại. Chạy lại bao nhiêu lần cũng idempotent.
 
 ## 4. Bắt đầu nhanh
 

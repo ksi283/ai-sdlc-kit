@@ -41,6 +41,15 @@ jobs:
           node cli/ai-sdlc-kit.mjs check /tmp/proj
       - name: Bilingual help (--lang vi)
         run: node cli/ai-sdlc-kit.mjs --help --lang vi | grep -q "dựng khung"
+      - name: update round-trip (skip preserves project edits; force overwrites; converges)
+        run: |
+          node cli/ai-sdlc-kit.mjs update /tmp/proj | grep -q "0 skipped"
+          echo "# custom" >> /tmp/proj/policy/quality-gates.yml
+          node cli/ai-sdlc-kit.mjs update /tmp/proj | grep -q "1 skipped"
+          node cli/ai-sdlc-kit.mjs update /tmp/proj | grep -q "1 skipped"
+          grep -q "# custom" /tmp/proj/policy/quality-gates.yml
+          node cli/ai-sdlc-kit.mjs update /tmp/proj --force | grep -q "1 updated"
+          node cli/ai-sdlc-kit.mjs update /tmp/proj | grep -q "0 skipped"
       - name: install.sh round-trip (mirrors CLI rules)
         run: |
           bash skills/install.sh spec-review /tmp/proj --agent claude
