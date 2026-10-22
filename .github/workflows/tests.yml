@@ -27,3 +27,21 @@ jobs:
 
       - name: Run gate battery (22 tests)
         run: npm test
+
+  cli-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Scaffold a project and verify its wiring (round-trip)
+        run: |
+          node cli/ai-sdlc-kit.mjs init /tmp/proj --skills intent-review
+          node cli/ai-sdlc-kit.mjs check /tmp/proj
+      - name: Bilingual help (--lang vi)
+        run: node cli/ai-sdlc-kit.mjs --help --lang vi | grep -q "dựng khung"
+      - name: Unknown pack must fail before writing anything
+        run: |
+          ! node cli/ai-sdlc-kit.mjs init /tmp/nope --skills does-not-exist
+          test ! -d /tmp/nope

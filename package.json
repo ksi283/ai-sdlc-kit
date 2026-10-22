@@ -1,0 +1,25 @@
+{
+  "name": "ai-sdlc-kit",
+  "version": "1.5.0",
+  "private": true,
+  "description": "AI-native SDLC kit — scaffold AI-augmented projects with gates, autonomy policy, onboarding. Bilingual EN/VI. Zero dependencies.",
+  "bin": {
+    "ai-sdlc-kit": "./cli/ai-sdlc-kit.mjs"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "ai-sdlc",
+    "sdlc",
+    "ai-agents",
+    "devops",
+    "governance"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ksi283/ai-sdlc-kit.git"
+  }
+}
