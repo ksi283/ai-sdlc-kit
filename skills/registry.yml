@@ -74,3 +74,23 @@ packs:
 
   # To publish your own skill: copy skills/_template/ to skills/<name>/, fill it in,
   # add an entry shaped like the one above, then PR. install.sh handles the rest.
+
+  - name: spec-review
+    class: local
+    source: skills/spec-review/
+    version: "0.1.0"
+    license: Apache-2.0 (inherits the kit)
+    purpose: Enforce the Definition-of-Ready gate — measurable acceptance criteria, non-goal integrity, scored tasks, test strategy, threat-model linkage.
+    auto_activate:
+      capability: spec-review
+      lifecycle_stages: [design]
+      use_when:
+        - drafting, editing or reviewing a spec.md at the DoR gate
+        - re-scoring tasks when design scope changes
+      not_for:
+        - intent drafting (intent-review skill) or runtime code review (Test stage)
+    install:
+      cmd: skills/install.sh spec-review <project-dir> --ai <agent>
+      lands-in: <project-dir>/.claude/skills/spec-review/  (per --ai mapping)
+    update_flow: edit source here → PR → re-run install.sh in each project (idempotent copy
+      + AGENTS.md auto-block refresh)

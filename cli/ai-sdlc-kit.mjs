@@ -82,6 +82,8 @@ const cmd = arg(2);
 function fail(msg) { console.error(`error: ${msg}`); process.exit(1); }
 function scaffoldWorkflow() {
   return `# Gate battery on every push/PR — the kit's Play 9 doctrine (evals in CI).
+# Day-0 friendly: the test step is skipped until your project has a package.json,
+# so a red CI always means YOUR tests failed — never missing scaffolding.
 name: tests
 
 on:
@@ -97,9 +99,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      # TODO: point this at your real test command (see templates/evals.md);
-      # tests should map to requirement IDs (FR/SR/EV) like the kit's example does.
-      - run: npm test
+      - name: Run tests (auto-skipped until package.json exists)
+        if: hashFiles('package.json') != ''
+        run: npm test --if-present
 `;
 }
 const CODEOWNERS = `# CODEOWNERS — ownership is the anti-"stepped-on-toes" mechanism (docs/en/13 §3).

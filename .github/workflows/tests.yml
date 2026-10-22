@@ -41,6 +41,11 @@ jobs:
           node cli/ai-sdlc-kit.mjs check /tmp/proj
       - name: Bilingual help (--lang vi)
         run: node cli/ai-sdlc-kit.mjs --help --lang vi | grep -q "dựng khung"
+      - name: install.sh round-trip (mirrors CLI rules)
+        run: |
+          bash skills/install.sh spec-review /tmp/proj --ai claude
+          test -f /tmp/proj/.claude/skills/spec-review/SKILL.md
+          grep -q "skills:auto:start" /tmp/proj/AGENTS.md
       - name: Unknown pack must fail before writing anything
         run: |
           ! node cli/ai-sdlc-kit.mjs init /tmp/nope --skills does-not-exist

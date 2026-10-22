@@ -39,6 +39,13 @@ npm start                      # → http://localhost:3000 — đăng ký, thêm
 
 `npm test` xanh = máy bạn sẵn sàng. Không cần cài thêm gì.
 
+> **Log xác minh.** Đường cơ học ở trên (init → check 10/10 → intent đầu tiên từ template
+> được scaffold) đã được thực thi như một mô phỏng thành viên-chưa-được-huấn-luyện ngày
+> 2026-10-22: scaffold + kiểm tra wiring xong trong dưới 5 giây, intent điền từ
+> `docs/templates/intent.md` mà không rời khỏi cây vừa scaffold. Một bẫy ngày-0 bị phát
+> hiện và đã sửa: workflow CI được sinh ra giờ bỏ qua bước test tới khi `package.json`
+> tồn tại — nên push đầu tiên của project mới luôn xanh; đỏ luôn nghĩa là *test của bạn* fail.
+
 ## 4. 60 phút đầu — bắt đầu app CỦA BẠN
 
 1. Dựng project bằng CLI của kit (zero dependency; cũng chạy được qua

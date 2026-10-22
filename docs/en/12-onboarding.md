@@ -42,6 +42,13 @@ npm start                      # → http://localhost:3000 — register, add tra
 
 If `npm test` is green, your machine is ready. Nothing else needs installing.
 
+> **Verification log.** The mechanical path above (init → check 10/10 → first intent from
+> the scaffolded template) was executed as an uncoached-member simulation on 2026-10-22:
+> scaffold + wiring check complete in under 5 seconds, intent filled from
+> `docs/templates/intent.md` without leaving the scaffolded tree. One day-0 trap was found
+> and fixed: the scaffolded CI workflow now skips its test step until `package.json`
+> exists, so a fresh project's first push is green — red always means *your* tests failed.
+
 ## 4. First 60 minutes — start YOUR app
 
 1. Scaffold your project with the kit CLI (zero dependencies; also works via
