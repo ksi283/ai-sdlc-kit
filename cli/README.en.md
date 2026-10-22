@@ -1,6 +1,6 @@
 # ai-sdlc-kit CLI
 
-> [🇻🇳 Tiếng Việt](README.md) · 🇬🇧 **English**
+> [Tiếng Việt](README.md) · **English**
 
 Zero-dependency CLI (Node ≥ 18, stdlib only) that scaffolds a new **AI-SDLC project**
 and verifies its wiring — so a new member goes from zero to "gates green" with one command
@@ -8,16 +8,25 @@ and verifies its wiring — so a new member goes from zero to "gates green" with
 
 ## Run it
 
+**Nothing installed — but EVERY command needs the `npx` prefix** (the most common trap:
+running `npx github:…` once and then calling `ai-sdlc-kit` directly gives `command not found`):
+
 ```bash
-# from a clone of the kit:
-node cli/ai-sdlc-kit.mjs --help
-
-# or without cloning (npx runs the bin straight from GitHub; private repo → needs your git auth):
 npx github:ksi283/ai-sdlc-kit --help
+npx github:ksi283/ai-sdlc-kit --help --lang vi
+npx github:ksi283/ai-sdlc-kit init my-app --skills intent-review --ai claude
+```
 
-# help + progress messages in Vietnamese:
+**Or install the global command once** to drop the prefix:
+
+```bash
+npm install -g github:ksi283/ai-sdlc-kit
 ai-sdlc-kit --help --lang vi
 ```
+
+**Or from a clone of the kit:** `node cli/ai-sdlc-kit.mjs --help`.
+
+*(Private repo → npx/npm installs from GitHub need your repo credentials.)*
 
 ## Commands
 

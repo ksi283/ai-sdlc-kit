@@ -1,6 +1,6 @@
 # AI-SDLC Kit for Software Development
 
-> [🇻🇳 Tiếng Việt](README.md) · 🇬🇧 **English**
+> [Tiếng Việt](README.md) · **English**
 
 > An AI-augmented / AI-native software development lifecycle framework — synthesized and designed from leading references, with a ready-to-use template set and a runnable reference app for verification.
 
@@ -36,7 +36,7 @@ AI has inverted the economics of software development:
 │                                                        │intent.md│
 │  ┌─────────────────────────────────────────────────┐   │  NEW    │
 │  │     LAYER 2: ORCHESTRATION                      │   └─────────┘
-│  │  Complexity routing · Autonomy levels L0–L3 ·   │
+│  │  Complexity routing · Autonomy levels L0–L3 · │
 │  │  Orchestrator + worker agents · Cross-harness   │
 │  │  review · Human-in-the-loop                     │
 │  └─────────────────────────────────────────────────┘
@@ -113,7 +113,28 @@ ai-sdlc/
 
 **Fastest path (30 min):** read `docs/en/02-framework.md` → copy `templates/intent.md` + `templates/AGENTS.md` into your repo → run one small feature through the six stages.
 
-## 6. Run the sample app (verified in practice)
+## 6. Installing the ai-sdlc-kit CLI
+
+**Option 1 — run directly, nothing installed** (prefix EVERY command with `npx`):
+
+```bash
+npx github:ksi283/ai-sdlc-kit init my-app --skills intent-review --ai claude
+npx github:ksi283/ai-sdlc-kit check my-app
+```
+
+**Option 2 — install the global command once**, then use plain `ai-sdlc-kit`:
+
+```bash
+npm install -g github:ksi283/ai-sdlc-kit
+ai-sdlc-kit init my-app --skills intent-review,spec-review --ai claude
+ai-sdlc-kit --help --lang vi
+```
+
+**Option 3 — from a clone of the kit:** `node cli/ai-sdlc-kit.mjs --help`.
+
+Note: the repo is currently private, so npx/npm installs from GitHub require your repo credentials. Full details: [`cli/README.md`](cli/README.md).
+
+## 7. Run the sample app (verified in practice)
 
 ```bash
 cd examples/money-web-app/app
@@ -123,7 +144,7 @@ npm test                     # 22 tests = the gate battery: FR-1..3, SR-1..6, ev
 
 The run results, mapped requirement by requirement, are in [`examples/money-web-app/app/RUN-REPORT.md`](examples/money-web-app/app/RUN-REPORT.md) — including the three real bugs the test battery caught along the way. GitHub Actions re-runs this battery on every push/PR (currently green). The app's UI/UX was upgraded with the `ui-ux-pro-max` skill pack — before/after evaluation with screenshots in [`examples/money-web-app/app/UI-UX-EVALUATION.md`](examples/money-web-app/app/UI-UX-EVALUATION.md).
 
-## 7. Primary references
+## 8. Primary references
 
 1. **Anthropic — The AI-native SDLC Playbook** (Claude Academy, 2026): 12 plays across 6 stages; artifacts `intent.md`, `CLAUDE.md`/`AGENTS.md`, skills, hooks, evals. <https://academy.claude.com/courses/ai-native-sdlc-playbook>
 2. **Microsoft — An AI-led SDLC** (Azure Blog, 2026): an end-to-end architecture: GitHub Spec Kit → coding agent → multi-model AI code review → CI/CD → SRE agent → observability → feedback loop. <https://techcommunity.microsoft.com/blog/appsonazureblog/an-ai-led-sdlc-building-an-end-to-end-agentic-software-development-lifecycle-wit/4491896>
@@ -131,16 +152,16 @@ The run results, mapped requirement by requirement, are in [`examples/money-web-
 
 Full synthesis, comparison and further reading: `docs/en/01-research-synthesis.md`.
 
-## 8. Adoption principles
+## 9. Adoption principles
 
 - The kit is **vendor-neutral** — every tool choice has interchangeable alternatives in `docs/*/06-toolchain.md`.
 - Adopt **modularly**: start from the no-prerequisite plays (`docs/*/07-adoption.md`).
 - Templates carry **guidance notes** (`<!-- ... -->` blocks) — delete them when using for real.
 
-## 9. License
+## 10. License
 
 Released under the **[Apache License 2.0](LICENSE)** — you are free to use, modify and distribute it (subject to the attribution terms and the patent grant in the license). The references (Anthropic, Microsoft, ai-sdlc.io) cited in section 7 are for study purposes; this kit is an independent work and contains no source code copied from them.
 
 ---
 
-*These two READMEs are kept in sync: [🇻🇳 Tiếng Việt](README.md) · [🇬🇧 English](README.en.md). For study and internal adoption; all cited figures are sourced in `docs/en/01-research-synthesis.md`.*
+*These two READMEs are kept in sync: [Tiếng Việt](README.md) · [English](README.en.md). For study and internal adoption; all cited figures are sourced in `docs/en/01-research-synthesis.md`.*

@@ -1,6 +1,6 @@
 # ai-sdlc-kit CLI
 
-> 🇻🇳 **Tiếng Việt** (mặc định) · [🇬🇧 English](README.en.md)
+> **Tiếng Việt** (mặc định) · [English](README.en.md)
 
 CLI zero-dependency (Node ≥ 18, chỉ stdlib) giúp **dựng khung project AI-SDLC mới** và
 kiểm chứng wiring — để thành viên mới đi từ số 0 tới "gates xanh" bằng một lệnh
@@ -8,16 +8,25 @@ kiểm chứng wiring — để thành viên mới đi từ số 0 tới "gates 
 
 ## Chạy
 
+**Không cần cài — nhưng mỗi lệnh đều phải có tiền tố `npx`** (đây là lỗi hay gặp nhất:
+chạy `npx github:…` một lần rồi gọi `ai-sdlc-kit` trực tiếp sẽ báo `command not found`):
+
 ```bash
-# từ bản clone của kit:
-node cli/ai-sdlc-kit.mjs --help
-
-# hoặc không cần clone (npx chạy bin thẳng từ GitHub; repo private → cần git auth của bạn):
 npx github:ksi283/ai-sdlc-kit --help
+npx github:ksi283/ai-sdlc-kit --help --lang vi
+npx github:ksi283/ai-sdlc-kit init my-app --skills intent-review --ai claude
+```
 
-# help + thông báo tiến trình bằng tiếng Việt:
+**Hoặc cài lệnh toàn cục một lần** để bỏ tiền tố:
+
+```bash
+npm install -g github:ksi283/ai-sdlc-kit
 ai-sdlc-kit --help --lang vi
 ```
+
+**Hoặc từ bản clone của kit:** `node cli/ai-sdlc-kit.mjs --help`.
+
+*(Repo private → npx/npm cài từ GitHub cần quyền truy cập repo của bạn.)*
 
 ## Các lệnh
 

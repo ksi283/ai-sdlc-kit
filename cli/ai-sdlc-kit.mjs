@@ -6,7 +6,7 @@ import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const KIT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const VERSION = '1.5.0';
+const VERSION = '1.5.1';
 const T = (p) => join(KIT_ROOT, 'templates', p);
 const S = (p) => join(KIT_ROOT, 'skills', p);
 
@@ -33,6 +33,11 @@ Usage:
 
   ai-sdlc-kit --help | --version
       --lang vi|en switches this help and progress messages (default: en).
+
+How to run (pick one):
+  npx github:ksi283/ai-sdlc-kit <command>    # nothing installed — prefix EVERY command
+  npm install -g github:ksi283/ai-sdlc-kit   # install once, then use plain 'ai-sdlc-kit …'
+  node cli/ai-sdlc-kit.mjs <command>         # from a clone of the kit repo
 `;
 
 const HELP_VI = `ai-sdlc-kit v${VERSION} — dựng khung và kiểm chứng dự án AI-SDLC
@@ -51,6 +56,11 @@ Cách dùng:
 
   ai-sdlc-kit --help | --version
       --lang vi|en đổi ngôn ngữ help và thông báo tiến trình (mặc định: en).
+
+Cách chạy (chọn một):
+  npx github:ksi283/ai-sdlc-kit <lệnh>       # không cần cài — MỖI lệnh đều cần tiền tố npx
+  npm install -g github:ksi283/ai-sdlc-kit   # cài một lần, sau đó gọi 'ai-sdlc-kit …' bình thường
+  node cli/ai-sdlc-kit.mjs <lệnh>            # từ bản clone của repo kit
 `;
 
 const STR = {

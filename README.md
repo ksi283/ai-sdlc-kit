@@ -1,6 +1,6 @@
 # Bộ AI-SDLC cho Phát triển Phần mềm
 
-> 🇻🇳 **Tiếng Việt** (mặc định) · [🇬🇧 English](README.en.md)
+> **Tiếng Việt** (mặc định) · [English](README.en.md)
 
 > Khung quy trình phát triển phần mềm tăng cường bằng AI (AI-augmented / AI-native SDLC) — tổng hợp, thiết kế từ các nguồn tham khảo hàng đầu, kèm bộ template dùng ngay và một ứng dụng mẫu chạy được để kiểm chứng.
 
@@ -36,7 +36,7 @@ AI đã đảo ngược nền kinh tế của phát triển phần mềm:
 │                                                        │intent.md│
 │  ┌─────────────────────────────────────────────────┐   │  MỚI    │
 │  │     LỚP 2: ĐIỀU PHỐI (ORCHESTRATION)            │   └─────────┘
-│  │  Routing theo độ phức tạp · Mức tự chủ L0–L3 ·  │
+│  │  Routing theo độ phức tạp · Mức tự chủ L0–L3 · │
 │  │  Orchestrator + Worker agents · Cross-harness   │
 │  │  review · Human-in-the-loop                     │
 │  └─────────────────────────────────────────────────┘
@@ -113,7 +113,28 @@ ai-sdlc/
 
 **Đường dẫn nhanh nhất (30 phút):** đọc `docs/vi/02-framework.md` → copy `templates/intent.md` + `templates/AGENTS.md` vào repo của bạn → chạy thử 1 feature nhỏ theo 6 giai đoạn.
 
-## 6. Chạy thử ứng dụng mẫu (kiểm chứng thực hành)
+## 6. Cài đặt CLI ai-sdlc-kit
+
+**Cách 1 — chạy thẳng, không cần cài** (mỗi lệnh đều phải có tiền tố `npx`):
+
+```bash
+npx github:ksi283/ai-sdlc-kit init my-app --skills intent-review --ai claude
+npx github:ksi283/ai-sdlc-kit check my-app
+```
+
+**Cách 2 — cài lệnh toàn cục một lần**, sau đó gọi `ai-sdlc-kit` như lệnh bình thường:
+
+```bash
+npm install -g github:ksi283/ai-sdlc-kit
+ai-sdlc-kit init my-app --skills intent-review,spec-review --ai claude
+ai-sdlc-kit --help --lang vi
+```
+
+**Cách 3 — từ bản clone của kit:** `node cli/ai-sdlc-kit.mjs --help`.
+
+Lưu ý: repo đang private nên npx/npm cài từ GitHub cần quyền truy cập repo của bạn. Chi tiết đầy đủ: [`cli/README.md`](cli/README.md).
+
+## 7. Chạy thử ứng dụng mẫu (kiểm chứng thực hành)
 
 ```bash
 cd examples/money-web-app/app
@@ -123,7 +144,7 @@ npm test                     # 22 test = "gate battery": FR-1..3, SR-1..6, evals
 
 Kết quả chạy thật và đối chiếu từng yêu cầu xem tại [`examples/money-web-app/app/RUN-REPORT.md`](examples/money-web-app/app/RUN-REPORT.md) — bao gồm 3 bug thật mà bộ test bắt được trong quá trình chạy. CI trên GitHub Actions chạy lại bộ test này trên mọi push/PR (đã xanh). UI/UX của app được nâng cấp bằng skill pack `ui-ux-pro-max` — đánh giá trước/sau kèm ảnh chụp xem [`examples/money-web-app/app/UI-UX-EVALUATION.md`](examples/money-web-app/app/UI-UX-EVALUATION.md).
 
-## 7. Nguồn tham khảo chính
+## 8. Nguồn tham khảo chính
 
 1. **Anthropic — The AI-native SDLC Playbook** (Claude Academy, 2026): 12 plays trên 6 giai đoạn; artifacts `intent.md`, `CLAUDE.md`/`AGENTS.md`, skills, hooks, evals. <https://academy.claude.com/courses/ai-native-sdlc-playbook>
 2. **Microsoft — An AI-led SDLC** (Azure Blog, 2026): kiến trúc end-to-end: GitHub Spec Kit → coding agent → AI code review đa mô hình → CI/CD → SRE agent → observability → vòng phản hồi. <https://techcommunity.microsoft.com/blog/appsonazureblog/an-ai-led-sdlc-building-an-end-to-end-agentic-software-development-lifecycle-wit/4491896>
@@ -131,16 +152,16 @@ Kết quả chạy thật và đối chiếu từng yêu cầu xem tại [`examp
 
 Tổng hợp, so sánh và nguồn bổ trợ: `docs/vi/01-research-synthesis.md`.
 
-## 8. Nguyên tắc áp dụng
+## 9. Nguyên tắc áp dụng
 
 - Bộ tài liệu **không ràng buộc vendor** — luôn có lựa chọn thay thế tương đương ở `docs/*/06-toolchain.md`.
 - Áp dụng **theo mô-đun**: bắt đầu từ các "play" không điều kiện tiên quyết (`docs/*/07-adoption.md`).
 - Mẫu trong `templates/` đều có **ghi chú hướng dẫn** (đoạn `<!-- ... -->`) — xóa khi dùng thật.
 
-## 9. Giấy phép
+## 10. Giấy phép
 
 Toàn bộ repo phát hành theo **[Apache License 2.0](LICENSE)** — bạn được tự do sử dụng, sửa đổi và phân phối (kèm các điều khoản ghi nguồn và bảo hộ bằng sáng chế theo license). Các nguồn tham khảo (Anthropic, Microsoft, ai-sdlc.io) được trích dẫn ở mục 7 chỉ nhằm mục đích học tập; kit này là tác phẩm độc lập, không sao chép mã nguồn từ các nguồn đó.
 
 ---
 
-*Hai file README này được giữ đồng bộ nội dung: [🇻🇳 Tiếng Việt](README.md) · [🇬🇧 English](README.en.md). Tài liệu phục vụ học tập và áp dụng nội bộ; số liệu trích dẫn có nguồn đầy đủ trong `docs/vi/01-research-synthesis.md`.*
+*Hai file README này được giữ đồng bộ nội dung: [Tiếng Việt](README.md) · [English](README.en.md). Tài liệu phục vụ học tập và áp dụng nội bộ; số liệu trích dẫn có nguồn đầy đủ trong `docs/vi/01-research-synthesis.md`.*
