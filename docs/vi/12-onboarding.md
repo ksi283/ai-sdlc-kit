@@ -53,11 +53,11 @@ npm start                      # → http://localhost:3000 — đăng ký, thêm
 
    ```bash
    # từ bản clone của kit:
-   node <kit>/cli/ai-sdlc-kit.mjs init my-app --skills intent-review --ai claude
+   node <kit>/cli/ai-sdlc-kit.mjs init my-app --skills intent-review --agent claude
    # hoặc thẳng từ GitHub (mỗi lệnh đều cần tiền tố npx):
-   npx github:ksi283/ai-sdlc-kit init my-app --skills intent-review --ai claude
+   npx github:ksi283/ai-sdlc-kit init my-app --skills intent-review --agent claude
    # hoặc cài lệnh toàn cục một lần rồi bỏ tiền tố:
-   npm install -g github:ksi283/ai-sdlc-kit && ai-sdlc-kit init my-app --skills intent-review --ai claude
+   npm install -g github:ksi283/ai-sdlc-kit && ai-sdlc-kit init my-app --skills intent-review --agent claude
    ```
 
    Lệnh này tạo `AGENTS.md`, `docs/templates/` (intent, spec, plan, evals, threat-model),

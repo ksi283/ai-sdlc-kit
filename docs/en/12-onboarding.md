@@ -56,11 +56,11 @@ If `npm test` is green, your machine is ready. Nothing else needs installing.
 
    ```bash
    # from a clone of the kit:
-   node <kit>/cli/ai-sdlc-kit.mjs init my-app --skills intent-review --ai claude
+   node <kit>/cli/ai-sdlc-kit.mjs init my-app --skills intent-review --agent claude
    # or straight from GitHub (every command needs the npx prefix):
-   npx github:ksi283/ai-sdlc-kit init my-app --skills intent-review --ai claude
+   npx github:ksi283/ai-sdlc-kit init my-app --skills intent-review --agent claude
    # or install the global command once and drop the prefix:
-   npm install -g github:ksi283/ai-sdlc-kit && ai-sdlc-kit init my-app --skills intent-review --ai claude
+   npm install -g github:ksi283/ai-sdlc-kit && ai-sdlc-kit init my-app --skills intent-review --agent claude
    ```
 
    This creates `AGENTS.md`, `docs/templates/` (intent, spec, plan, evals, threat-model),

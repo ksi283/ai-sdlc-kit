@@ -1,6 +1,6 @@
 {
   "name": "ai-sdlc-kit",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "private": true,
   "description": "AI-native SDLC kit — scaffold AI-augmented projects with gates, autonomy policy, onboarding. Bilingual EN/VI. Zero dependencies.",
   "bin": {

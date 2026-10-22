@@ -40,7 +40,7 @@ packs:
         - backend logic, API or database design
         - CI, security gates, infrastructure
     install:
-      cmd: npx -y ui-ux-pro-max-cli@2.15.0 init --ai <agent>
+      cmd: npx -y ui-ux-pro-max-cli@2.15.0 init --ai <agent>   # --ai is uipro's own third-party flag
       agents: [claude, cursor, codex, gemini, copilot, all]   # see pack docs for the full list
       lands-in: .claude/skills/  |  .cursor/skills/  |  … (per --ai)
       global_variant: npm install -g ui-ux-pro-max-cli@2.15.0 && uipro init --ai claude --global
@@ -67,7 +67,7 @@ packs:
       not_for:
         - spec review (DoR gate) or task complexity routing
     install:
-      cmd: skills/install.sh intent-review <project-dir> --ai <agent>
+      cmd: skills/install.sh intent-review <project-dir> --agent <agent>
       lands-in: <project-dir>/.claude/skills/intent-review/  (per --ai mapping)
     update_flow: edit source here → PR → re-run install.sh in each project (idempotent copy
       + AGENTS.md auto-block refresh)
@@ -90,7 +90,7 @@ packs:
       not_for:
         - intent drafting (intent-review skill) or runtime code review (Test stage)
     install:
-      cmd: skills/install.sh spec-review <project-dir> --ai <agent>
+      cmd: skills/install.sh spec-review <project-dir> --agent <agent>
       lands-in: <project-dir>/.claude/skills/spec-review/  (per --ai mapping)
     update_flow: edit source here → PR → re-run install.sh in each project (idempotent copy
       + AGENTS.md auto-block refresh)

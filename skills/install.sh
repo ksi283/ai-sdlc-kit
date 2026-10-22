@@ -2,7 +2,8 @@
 # skills/install.sh — install a skill pack into a project and wire auto-activation.
 #
 # Usage:
-#   skills/install.sh <pack-name> <project-dir> [--ai claude|cursor|codex|zcode]
+#   skills/install.sh <pack-name> <project-dir> [--agent claude|cursor|codex|zcode]
+#   ('--ai' still works as a deprecated alias)
 #
 # What it does:
 #   local pack    → copies skills/<pack-name>/ into <project>/.<agent>/skills/<pack-name>/
@@ -20,9 +21,13 @@ REGISTRY="$KIT_ROOT/skills/registry.yml"
 
 die() { echo "error: $*" >&2; exit 1; }
 
-[ $# -ge 2 ] || die "usage: skills/install.sh <pack-name> <project-dir> [--ai claude|cursor|codex|zcode]"
+[ $# -ge 2 ] || die "usage: skills/install.sh <pack-name> <project-dir> [--agent claude|cursor|codex|zcode]"
 PACK="$1"; PROJECT="$2"; AI="${3:-}"
-if [ "$AI" = "--ai" ]; then AI="${4:-claude}"; fi
+if [ "$AI" = "--agent" ] || [ "$AI" = "--ai" ]; then AI="${4:-}"; fi
+if [ -z "$AI" ]; then
+  AI="claude"
+  echo "note: no --agent given — defaulting to claude (.claude/skills/)."
+fi
 [ -f "$REGISTRY" ] || die "registry not found: $REGISTRY"
 [ -d "$PROJECT" ] || die "project dir not found: $PROJECT"
 
@@ -31,7 +36,7 @@ case "${AI:-claude}" in
   cursor) AGENT_DIR=".cursor/skills" ;;
   codex)  AGENT_DIR=".agents/skills" ;;
   zcode)  AGENT_DIR=".zcode/skills" ;;
-  *) die "unknown --ai target '$AI' (claude|cursor|codex|zcode)" ;;
+  *) die "unknown --agent target '$AI' (claude|cursor|codex|zcode)" ;;
 esac
 
 # resolve class + version from the registry (python stdlib only)

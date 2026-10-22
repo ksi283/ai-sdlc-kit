@@ -6,7 +6,7 @@ import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const KIT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const VERSION = '1.5.1';
+const VERSION = '1.6.0';
 const T = (p) => join(KIT_ROOT, 'templates', p);
 const S = (p) => join(KIT_ROOT, 'skills', p);
 
@@ -20,15 +20,17 @@ const LANG = (() => {
 const HELP_EN = `ai-sdlc-kit v${VERSION} — scaffold and verify AI-SDLC projects
 
 Usage:
-  ai-sdlc-kit init <dir> [--ai claude|cursor|codex|zcode] [--skills <list>] [--force] [--dry-run] [--lang vi|en]
+  ai-sdlc-kit init <dir> [--agent claude|cursor|codex|zcode] [--skills <list>] [--force] [--dry-run] [--lang vi|en]
       Scaffold a new AI-SDLC project: starter files, policy, CI, skill auto-activation.
       --skills is a comma list from skills/registry.yml (default: intent-review).
+      --agent selects the target agent's skill directory (default: claude, printed
+      when applied). '--ai' still works as a deprecated alias.
 
   ai-sdlc-kit check [dir]
       Report the project's kit wiring (AGENTS.md, gates, CI, CODEOWNERS, intents…).
       Exit code 1 when wiring is incomplete — usable in CI.
 
-  ai-sdlc-kit skill <pack> <dir> [--ai …]
+  ai-sdlc-kit skill <pack> <dir> [--agent …]
       Install one registry pack into a project (same rules as skills/install.sh).
 
   ai-sdlc-kit --help | --version
@@ -43,15 +45,17 @@ How to run (pick one):
 const HELP_VI = `ai-sdlc-kit v${VERSION} — dựng khung và kiểm chứng dự án AI-SDLC
 
 Cách dùng:
-  ai-sdlc-kit init <dir> [--ai claude|cursor|codex|zcode] [--skills <danh-sách>] [--force] [--dry-run] [--lang vi|en]
+  ai-sdlc-kit init <dir> [--agent claude|cursor|codex|zcode] [--skills <danh-sách>] [--force] [--dry-run] [--lang vi|en]
       Dựng project AI-SDLC mới: file khởi động, policy, CI, auto-activation skill.
       --skills là danh sách phẩy tách từ skills/registry.yml (mặc định: intent-review).
+      --agent chọn thư mục skill của nền tảng agent nhận cài (mặc định: claude, sẽ
+      in thông báo khi áp dụng). '--ai' vẫn chạy như alias đã ngừng khuyến nghị.
 
   ai-sdlc-kit check [dir]
       Báo cáo 10 điểm wiring của project (AGENTS.md, gates, CI, CODEOWNERS, intents…).
       Exit 1 khi còn thiếu — dùng được như một bước CI.
 
-  ai-sdlc-kit skill <pack> <dir> [--ai …]
+  ai-sdlc-kit skill <pack> <dir> [--agent …]
       Cài một pack từ registry vào project (cùng quy tắc với skills/install.sh).
 
   ai-sdlc-kit --help | --version
@@ -66,8 +70,8 @@ Cách chạy (chọn một):
 const STR = {
   en: {
     scaffolding: (dir, ai, skills, dry) => dry
-      ? `DRY RUN — would scaffold '${dir}' (--ai ${ai}, skills: ${skills || 'none'}):`
-      : `scaffolding '${dir}' (--ai ${ai}, skills: ${skills || 'none'}):`,
+      ? `DRY RUN — would scaffold '${dir}' (--agent ${ai}, skills: ${skills || 'none'}):`
+      : `scaffolding '${dir}' (--agent ${ai}, skills: ${skills || 'none'}):`,
     done: (dry) => dry ? 'dry run complete.'
       : `done. Next: edit AGENTS.md for your project, then write docs/intents/INT-…-your-first-intent.md (see docs/en/12-onboarding.md).`,
     wired: (p) => `  auto-activation block wired → ${p}`,
@@ -76,8 +80,8 @@ const STR = {
   },
   vi: {
     scaffolding: (dir, ai, skills, dry) => dry
-      ? `DRY RUN — sẽ dựng khung '${dir}' (--ai ${ai}, skills: ${skills || 'không'}):`
-      : `đang dựng khung '${dir}' (--ai ${ai}, skills: ${skills || 'không'}):`,
+      ? `DRY RUN — sẽ dựng khung '${dir}' (--agent ${ai}, skills: ${skills || 'không'}):`
+      : `đang dựng khung '${dir}' (--agent ${ai}, skills: ${skills || 'không'}):`,
     done: (dry) => dry ? 'chạy thử xong.'
       : `xong. Bước tiếp: sửa AGENTS.md cho dự án của bạn, rồi viết docs/intents/INT-…-intent-dau-tien.md (xem docs/vi/12-onboarding.md).`,
     wired: (p) => `  đã dây block auto-activation → ${p}`,
@@ -204,17 +208,21 @@ function printExternalPack(pack) {
 function doInit(args) {
   const dir = resolve(args[0] ?? '');
   if (!dir) fail('init requires a target directory');
-  let ai = 'claude', skills = ['intent-review'], force = false, dry = false;
+  let ai = null, skills = ['intent-review'], force = false, dry = false;
   for (let i = 1; i < args.length; i++) {
-    if (args[i] === '--ai') ai = args[++i] ?? fail('--ai needs a value');
+    if (args[i] === '--agent' || args[i] === '--ai') ai = args[++i] ?? fail(`${args[i - 1]} needs a value`);
     else if (args[i] === '--skills') skills = (args[++i] ?? '').split(',').map(s => s.trim()).filter(Boolean);
     else if (args[i] === '--force') force = true;
     else if (args[i] === '--dry-run') dry = true;
     else if (args[i] === '--lang') { i++; continue; } // already parsed globally
     else fail(`unknown option '${args[i]}'`);
   }
+  if (skills.length && !ai) {
+    ai = 'claude';
+    console.log(`note: no --agent given — defaulting to claude (.claude/skills/). Pass --agent claude|cursor|codex|zcode to choose the target.`);
+  }
   const agentDir = { claude: '.claude/skills', cursor: '.cursor/skills', codex: '.agents/skills', zcode: '.zcode/skills' }[ai]
-    ?? fail(`unknown --ai '${ai}' (claude|cursor|codex|zcode)`);
+    ?? fail(`unknown --agent '${ai}' (claude|cursor|codex|zcode)`);
   if (existsSync(dir) && readdirSync(dir).length && !force) {
     fail(`'${dir}' is not empty — use --force to scaffold into it anyway`);
   }
@@ -294,12 +302,16 @@ function doCheck(args) {
 // ── skill ───────────────────────────────────────────────────────────────
 function doSkill(args) {
   const [pack, dir] = args;
-  if (!pack || !dir) fail('usage: ai-sdlc-kit skill <pack> <dir> [--ai claude|cursor|codex|zcode]');
-  let ai = 'claude';
-  const i = args.indexOf('--ai');
-  if (i !== -1) ai = args[i + 1] ?? fail('--ai needs a value');
+  if (!pack || !dir) fail('usage: ai-sdlc-kit skill <pack> <dir> [--agent claude|cursor|codex|zcode]');
+  let ai = null;
+  const i = args.findIndex(a => a === '--agent' || a === '--ai');
+  if (i !== -1) ai = args[i + 1] ?? fail(`${args[i]} needs a value`);
+  if (!ai) {
+    ai = 'claude';
+    console.log(`note: no --agent given — defaulting to claude (.claude/skills/). Pass --agent claude|cursor|codex|zcode to choose the target.`);
+  }
   const agentDir = { claude: '.claude/skills', cursor: '.cursor/skills', codex: '.agents/skills', zcode: '.zcode/skills' }[ai]
-    ?? fail(`unknown --ai '${ai}'`);
+    ?? fail(`unknown --agent '${ai}' (claude|cursor|codex|zcode)`);
   const { rows, packs } = skillRows([pack]);
   const p = packs[0];
   p.class === 'local' ? installLocalPack(p, resolve(dir), agentDir) : printExternalPack(p);
