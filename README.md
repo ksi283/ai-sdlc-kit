@@ -1,167 +1,179 @@
-# Bộ AI-SDLC cho Phát triển Phần mềm
+<div align="center">
 
-> **Tiếng Việt** (mặc định) · [English](README.en.md)
+# AI-SDLC Kit
 
-> Khung quy trình phát triển phần mềm tăng cường bằng AI (AI-augmented / AI-native SDLC) — tổng hợp, thiết kế từ các nguồn tham khảo hàng đầu, kèm bộ template dùng ngay và một ứng dụng mẫu chạy được để kiểm chứng.
+**Bộ quy trình phát triển phần mềm tăng cường AI — khung lõi, template dùng ngay, CLI và ứng dụng kiểm chứng.**
 
-**Phiên bản:** 1.5 · **Ngày:** 2026-10-22
+[![version](https://img.shields.io/badge/version-1.6.0-blue)]() [![license](https://img.shields.io/badge/license-Apache--2.0-green)](LICENSE) [![node](https://img.shields.io/badge/node-%E2%89%A518-339933)]() [![docs](https://img.shields.io/badge/docs-EN%20%7C%20VI-informational)]()
+
+**Tiếng Việt** · [English](README.en.md)
+
+</div>
 
 ---
 
-## 1. Vì sao cần bộ AI-SDLC này?
+Viết code không còn là điểm nghẽn — *xác minh, governance và đo lường* mới là. Kit này cung cấp một quy trình phần mềm hoàn chỉnh cho thời đại AI: **6 giai đoạn khép vòng · mức tự chủ kiếm bằng bằng chứng · quality gates 3 cấp · bộ metric 5 nhóm**, kèm template áp dụng ngay và một ứng dụng chạy được để chứng minh toàn bộ lý thuyết không nằm trên giấy.
 
-AI đã đảo ngược nền kinh tế của phát triển phần mềm:
+| | |
+|---|---|
+| **Trạng thái** | Sẵn sàng |
+| **Ngôn ngữ** | Hướng dẫn song ngữ EN/VI  |
+| **Tính trung lập** | Không ràng buộc vendor — Claude Code / Codex / Cursor / bất kỳ agent nào |
 
-- **85%** lập trình viên dùng công cụ AI; **41%** mã nguồn trên GitHub do AI tạo ra — nhưng chỉ **1/5** doanh nghiệp có governance trưởng thành (ai-sdlc.io).
-- Nghiên cứu METR: dev kỳ cựu dùng AI **chậm hơn 19%** trong khi tin mình **nhanh hơn 20%** — khoảng cách nhận thức 39 điểm.
-- DORA: mỗi +25% mức áp dụng AI tương ứng **−7,2%** độ ổn định delivery.
-- Faros AI: PR merged **+98%**, kích thước PR **+154%**, thời gian review **+91%** → **review là nút thắt mới**.
+## Mục lục
 
-**Kết luận:** viết code không còn là điểm nghẽn — *xác minh (verification), governance và đo lường* mới là. Toàn bộ kit được thiết kế xoay quanh thực tế đó, và đã được kiểm chứng thực hành qua một ứng dụng mẫu chạy được (mục 6).
+1. [Vì sao cần kit này](#1-vì-sao-cần-kit-này)
+2. [Kiến trúc](#2-kiến-trúc)
+3. [Cài đặt](#3-cài-đặt)
+4. [Bắt đầu nhanh](#4-bắt-đầu-nhanh)
+5. [Có gì trong kit](#5-có-gì-trong-kit)
+6. [Bản đồ tài liệu](#6-bản-đồ-tài-liệu)
+7. [Cơ chế skill packs](#7-cơ-chế-skill-packs)
+8. [Ví dụ minh họa](#8-ví-dụ-minh-họa)
+9. [Nguồn tham khảo](#9-nguồn-tham-khảo)
+10. [Giấy phép](#10-giấy-phép)
 
-## 2. Thiết kế tổng thể: "3 lớp — 6 giai đoạn — 1 vòng lặp"
+---
+
+## 1. Vì sao cần kit này
+
+Bốn con số định hình toàn bộ thiết kế:
+
+| Dữ kiện | Hệ quả |
+|---|---|
+| METR: dev dùng AI **chậm hơn 19%** nhưng tin mình **nhanh hơn 20%** | Cảm nhận chủ quan không ra quyết định được — phải đo |
+| DORA: +25% áp dụng AI ↔ **−7,2%** độ ổn định | Tốc độ phải đi cùng gates |
+| Faros: thời gian review **+91%** | **Review là nút thắt mới**, không phải viết code |
+| Chỉ **1/5** tổ chức có governance trưởng thành | Khoảng trống cần lấp bằng cơ chế, không phải công cụ lẻ |
+
+→ Đọc phân tích đầy đủ: [`docs/vi/01-research-synthesis.md`](docs/vi/01-research-synthesis.md).
+
+## 2. Kiến trúc
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                   LỚP 1: VÒNG ĐỜI (LIFECYCLE)                   │
+│                   LỚP 1 · VÒNG ĐỜI                             │
 │                                                                 │
-│   ┌──────┐   ┌──────┐   ┌──────┐   ┌──────┐   ┌──────┐   ┌──────┐
-│   │ PLAN │→ │DESIGN│→ │BUILD │→ │ TEST │→ │DEPLOY│→ │MAINT.│
-│   └──────┘   └──────┘   └──────┘   └──────┘   └──────┘   └──┬───┘
-│        ↑          ↑          ↑          ↑          ↑         │
-│      DoR        DoR        DoR       Quality    Deploy    metric
-│     gate        gate       gate       gates     gates     lệch
-│        ↑          ↑          ↑          ↑          ↑       band
-│   ═════════════ LỚP 3: QUALITY GATES ═════════════════  ┌────┴────┐
-│                                                        │intent.md│
-│  ┌─────────────────────────────────────────────────┐   │  MỚI    │
-│  │     LỚP 2: ĐIỀU PHỐI (ORCHESTRATION)            │   └─────────┘
-│  │  Routing theo độ phức tạp · Mức tự chủ L0–L3 · │
-│  │  Orchestrator + Worker agents · Cross-harness   │
-│  │  review · Human-in-the-loop                     │
-│  └─────────────────────────────────────────────────┘
+│   PLAN ─► DESIGN ─► BUILD ─► TEST ─► DEPLOY ─► MAINTAIN ──┐     │
+│  (intent) (spec+plan) (agent     (xác   (phát     (giám   │     │
+│                          thực)    minh)  hành)     sát)    │     │
+│     ▲        ▲         ▲         ▲        ▲               │     │
+│   DoR       DoR      Build    Quality   Deploy      metric lệch │
+│   gate      gate      Ready    gates     gates           band   │
+│     ▲        ▲         ▲         ▲        ▲               │     │
+│   ══════════ LỚP 3 · QUALITY GATES (3 cấp) ══════════ ┌───┴───┐ │
+│                                                        │intent │ │
+│  ┌─────────────────────────────────────────────────┐   │.md MỚI│ │
+│  │        LỚP 2 · ĐIỀU PHỐI                        │   └───────┘ │
+│  │  Routing theo độ phức tạp (1–10) · Tự chủ L0–L3 │             │
+│  │  Cross-harness review · Human-in-the-loop       │             │
+│  └─────────────────────────────────────────────────┘             │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-- **Lớp 1 — Vòng đời:** Plan → Design → Build → Test → Deploy → Maintain, khép kín bằng vòng phản hồi từ production (metric lệch band → intent mới).
-- **Lớp 2 — Điều phối:** ai làm gì (human/agent), ở mức tự chủ nào, review thế nào.
-- **Lớp 3 — Nền tảng tin cậy:** quality gates 3 cấp, metrics 5 nhóm, knowledge-as-code, zero-trust.
+- **Lớp 1 — Vòng đời:** 6 giai đoạn khép kín bằng vòng phản hồi từ production.
+- **Lớp 2 — Điều phối:** ai làm gì, ở mức tự chủ nào, review thế nào.
+- **Lớp 3 — Nền tảng tin cậy:** gates, policy, metrics, knowledge-as-code.
 
-## 3. Quy ước ngôn ngữ
+Chi tiết từng giai đoạn xem tại: [`docs/vi/02-framework.md`](docs/vi/02-framework.md).
 
-| Thành phần | Ngôn ngữ |
-|---|---|
-| `README.md` (file này) | **Tiếng Việt** — mặc định |
-| [`README.en.md`](README.en.md) | Tiếng Anh — bản song song, nội dung tương đương |
-| `docs/vi/` (13 hướng dẫn) | Tiếng Việt, mỗi file có liên kết sang bản Anh |
-| `docs/en/` (13 guides) | Tiếng Anh |
-| `templates/` + `examples/` | **Tiếng Anh** — đây là artifact dùng thật trong repo dự án (code, PR, spec, policy) |
+## 3. Cài đặt
 
-## 4. Cấu trúc thư mục
-
-```
-ai-sdlc/
-├── README.md                  ← bạn đang ở đây (Tiếng Việt, mặc định)
-├── README.en.md               # bản tiếng Anh
-├── docs/
-│   ├── vi/                    # 11 hướng dẫn tiếng Việt
-│   └── en/                    # 11 English guides
-│       01 nghiên cứu · 02 khung lõi · 03 tổ chức & tự chủ
-│       04 gates & chính sách · 05 metrics · 06 công cụ
-│       07 lộ trình · 08 bảo mật & DevSecOps
-│       09 discovery & UX · 10 vận hành giao hàng · 11 portfolio
-│       12 cài đặt & onboarding · 13 kế hoạch v2 đa thành viên
-├── cli/                       # CLI zero-dep: init my-app / check / skill (chạy qua npx github:…)
-│   └── ai-sdlc-kit.mjs
-├── skills/                    # cơ chế skill packs: registry + install.sh (auto-activation)
-│   ├── registry.yml           # catalog trung lập: version pin, license, auto_activate
-│   ├── install.sh             # cài pack vào project + tự sinh block routing vào AGENTS.md
-│   ├── intent-review/         # skill do kit tự viết (mẫu local pack)
-│   └── _template/             # khung khởi tạo skill của riêng bạn
-├── templates/                 # 13 file dùng ngay — TIẾNG ANH
-│   ├── intent.md · spec.md · plan.md · AGENTS.md · evals.md
-│   ├── quality-gates.yml · autonomy-policy.yml · pipeline.yml
-│   ├── pr-template.md · threat-model.md · priority-scorecard.md
-│   └── adr.md · postmortem-to-intent.md
-├── .github/workflows/tests.yml # CI: gate battery chạy trên mọi push/PR
-└── examples/                  # CHỈ ĐỂ TEST LUỒNG — không deploy production
-    ├── mini-todo-api/         # ví dụ "chạy lần đầu" (EN)
-    └── money-web-app/         # ví dụ nặng bảo mật: auth + dữ liệu tiền (EN)
-        └── app/               # ỨNG DỤNG CHẠY ĐƯỢC (npm start / npm test)
-```
-
-## 5. Đọc gì trước?
-
-| Bạn là ai / cần gì | Đọc gì trước |
-|---|---|
-| Cần hiểu bối cảnh & vì sao | `docs/vi/01-research-synthesis.md` |
-| Muốn nắm khung quy trình (~20 phút) | `docs/vi/02-framework.md` |
-| Bắt đầu pilot ngay tuần này | `docs/vi/07-adoption.md` + copy `templates/intent.md`, `templates/AGENTS.md` |
-| Chuẩn hóa review & chất lượng | `docs/vi/04-gates-policy.md` + `templates/quality-gates.yml` |
-| Dashboard / báo cáo lãnh đạo | `docs/vi/05-metrics.md` |
-| Chọn công cụ, kiến trúc hệ thống | `docs/vi/06-toolchain.md` |
-| Bảo mật sản phẩm (threat model, vuln, DevSecOps) | `docs/vi/08-security.md` + `templates/threat-model.md` |
-| Quyết định xây gì trước Plan (research, UX, khả thi) | `docs/vi/09-discovery-ux.md` |
-| Ước lượng, versioning, môi trường, tech debt | `docs/vi/10-delivery-ops.md` |
-| Ưu tiên hóa, năng lực, quản trị vendor/mô hình | `docs/vi/11-portfolio.md` + `templates/priority-scorecard.md` |
-| Xem dự án nhỏ chạy đủ vòng đời | `examples/mini-todo-api/` |
-| Xem vòng đời nặng bảo mật + app chạy thật | `examples/money-web-app/` |
-| Đưa kit cho người khác / tự triển khai từ đầu | `docs/vi/12-onboarding.md` |
-| Cài kit vào project mới bằng CLI | `npx github:ksi283/ai-sdlc-kit init my-app` — chi tiết `cli/README.md` |
-| Cài skill packs (UI/UX…) cho project của bạn | `skills/README.md` + `skills/registry.yml` |
-| Cả team dùng chung kit mà không loạn (kế hoạch v2) | `docs/vi/13-roadmap-v2.md` |
-
-**Đường dẫn nhanh nhất (30 phút):** đọc `docs/vi/02-framework.md` → copy `templates/intent.md` + `templates/AGENTS.md` vào repo của bạn → chạy thử 1 feature nhỏ theo 6 giai đoạn.
-
-## 6. Cài đặt CLI ai-sdlc-kit
-
-**Cách 1 — chạy thẳng, không cần cài** (mỗi lệnh đều phải có tiền tố `npx`):
+CLI zero-dependency (Node ≥ 18). Ba cách, chọn một:
 
 ```bash
-npx github:ksi283/ai-sdlc-kit init my-app --skills intent-review --ai claude
-npx github:ksi283/ai-sdlc-kit check my-app
-```
+# ① Chạy thẳng — mỗi lệnh đều có tiền tố npx
+npx github:ksi283/ai-sdlc-kit init my-app --skills intent-review --agent claude
 
-**Cách 2 — cài lệnh toàn cục một lần**, sau đó gọi `ai-sdlc-kit` như lệnh bình thường:
-
-```bash
+# ② Cài lệnh toàn cục một lần, sau đó gọi bình thường
 npm install -g github:ksi283/ai-sdlc-kit
-ai-sdlc-kit init my-app --skills intent-review,spec-review --ai claude
-ai-sdlc-kit --help --lang vi
+ai-sdlc-kit init my-app && ai-sdlc-kit check my-app
+
+# ③ Từ bản clone của kit
+node cli/ai-sdlc-kit.mjs --help          # thêm --lang vi cho help tiếng Việt
 ```
 
-**Cách 3 — từ bản clone của kit:** `node cli/ai-sdlc-kit.mjs --help`.
+| Lệnh / tùy chọn | Chức năng |
+|---|---|
+| `init <dir>` | Scaffold project |
+| `check [dir]` | Báo cáo wiring 10 điểm — **exit 1 khi thiếu** |
+| `skill <pack> <dir>` | Cài một pack từ registry vào project |
+| `--agent <ide name>` | Chọn thư mục skill của nền tảng nhận cài (`claude` · `cursor` · `codex` · `zcode`) |
 
-Lưu ý: repo đang private nên npx/npm cài từ GitHub cần quyền truy cập repo của bạn. Chi tiết đầy đủ: [`cli/README.md`](cli/README.md).
+Chi tiết: [`cli/README.md`](cli/README.md).
 
-## 7. Chạy thử ứng dụng mẫu (kiểm chứng thực hành)
+## 4. Bắt đầu nhanh
+
+**Tải về & chạy thử ứng dụng kiểm chứng:**
 
 ```bash
-cd examples/money-web-app/app
-npm install && npm start     # → http://localhost:3000 (web app quản lý tiền, có auth)
-npm test                     # 22 test = "gate battery": FR-1..3, SR-1..6, evals
+git clone https://github.com/ksi283/ai-sdlc-kit.git && cd ai-sdlc-kit
+# đọc đúng 2 tài liệu: docs/vi/02-framework.md + docs/vi/07-adoption.md
+cd examples/money-web-app/app && npm install && npm test   # 22/22 test = gate battery
+npm start                                                   # → http://localhost:3000
 ```
 
-Kết quả chạy thật và đối chiếu từng yêu cầu xem tại [`examples/money-web-app/app/RUN-REPORT.md`](examples/money-web-app/app/RUN-REPORT.md) — bao gồm 3 bug thật mà bộ test bắt được trong quá trình chạy. CI trên GitHub Actions chạy lại bộ test này trên mọi push/PR (đã xanh). UI/UX của app được nâng cấp bằng skill pack `ui-ux-pro-max` — đánh giá trước/sau kèm ảnh chụp xem [`examples/money-web-app/app/UI-UX-EVALUATION.md`](examples/money-web-app/app/UI-UX-EVALUATION.md).
 
-## 8. Nguồn tham khảo chính
+## 5. Có gì trong kit
 
-1. **Anthropic — The AI-native SDLC Playbook** (Claude Academy, 2026): 12 plays trên 6 giai đoạn; artifacts `intent.md`, `CLAUDE.md`/`AGENTS.md`, skills, hooks, evals. <https://academy.claude.com/courses/ai-native-sdlc-playbook>
-2. **Microsoft — An AI-led SDLC** (Azure Blog, 2026): kiến trúc end-to-end: GitHub Spec Kit → coding agent → AI code review đa mô hình → CI/CD → SRE agent → observability → vòng phản hồi. <https://techcommunity.microsoft.com/blog/appsonazureblog/an-ai-led-sdlc-building-an-end-to-end-agentic-software-development-lifecycle-wit/4491896>
-3. **AI-SDLC Framework** (ai-sdlc.io, Apache-2.0): đặc tả governance mở — Pipeline/AgentRole/QualityGate/AutonomyPolicy, mức tự chủ L0–L3, policy 3 cấp, metrics 5 nhóm. <https://ai-sdlc.io/docs>
+| Thành phần | Nội dung | Vai trò |
+|---|---|---|
+| `docs/` | 13 hướng dẫn × 2 ngôn ngữ (EN + VI) | Học thuyết: từ nghiên cứu → khung → bảo mật → roadmap v2 |
+| `templates/` | 13 file dùng ngay (tiếng Anh) | Artifact dự án thật: intent, spec, plan, gates, threat model… |
+| `skills/` | Registry + installer + 2 skill tự viết | Cơ chế skill packs với auto-activation |
+| `cli/` | `ai-sdlc-kit` zero-dependency | Scaffold + kiểm chứng wiring |
+| `examples/` | 2 ví dụ đi trọn vòng đời, 1 app chạy được | Kiểm chứng bằng thực hành |
+| `.github/` | CI 3 jobs | Gate battery + cli-smoke + install.sh round-trip |
 
-Tổng hợp, so sánh và nguồn bổ trợ: `docs/vi/01-research-synthesis.md`.
+## 6. Bản đồ tài liệu
 
-## 9. Nguyên tắc áp dụng
+| # | Tài liệu | Trả lời câu hỏi |
+|---|---|---|
+| 01 | [Nghiên cứu](docs/vi/01-research-synthesis.md) | Vì sao thiết kế như vậy? |
+| 02 | [Khung lõi](docs/vi/02-framework.md) | Quy trình vận hành thế nào? |
+| 03 | [Tổ chức & tự chủ](docs/vi/03-org-autonomy.md) | Ai làm gì? Agent được quyền gì? |
+| 04 | [Gates & chính sách](docs/vi/04-gates-policy.md) | Chặn gì, ở đâu, cứng đến đâu? |
+| 05 | [Metrics](docs/vi/05-metrics.md) | Đo gì để ra quyết định? |
+| 06 | [Công cụ](docs/vi/06-toolchain.md) | Chọn stack nào, model nào cho pha nào? |
+| 07 | [Lộ trình áp dụng](docs/vi/07-adoption.md) | Bắt đầu từ đâu không bị ngợp? |
+| 08 | [Bảo mật & DevSecOps](docs/vi/08-security.md) | Bảo mật sản phẩm xuyên suốt vòng đời? |
+| 09 | [Discovery & UX](docs/vi/09-discovery-ux.md) | Xây đúng thứ trước khi xây nhanh? |
+| 10 | [Vận hành giao hàng](docs/vi/10-delivery-ops.md) | Ước lượng, versioning, tech debt? |
+| 11 | [Portfolio](docs/vi/11-portfolio.md) | Ưu tiên gì, quản vendor thế nào? |
+| 12 | [Onboarding](docs/vi/12-onboarding.md) | Người mới tự phục vụ được chưa? |
+| 13 | [Kế hoạch v2](docs/vi/13-roadmap-v2.md) | Cả team dùng mà không loạn? |
 
-- Bộ tài liệu **không ràng buộc vendor** — luôn có lựa chọn thay thế tương đương ở `docs/*/06-toolchain.md`.
-- Áp dụng **theo mô-đun**: bắt đầu từ các "play" không điều kiện tiên quyết (`docs/*/07-adoption.md`).
-- Mẫu trong `templates/` đều có **ghi chú hướng dẫn** (đoạn `<!-- ... -->`) — xóa khi dùng thật.
+## 7. Cơ chế skill packs
+
+Skill pack = năng lực đóng gói cho AI agent (thiết kế, review chuẩn, quy ước domain). Hai luồng tách bạch:
+
+```
+PUBLISH (1 lần, qua PR):  skills/_template/ → skills/<tên>/ → đăng ký registry.yml
+INSTALL  (mỗi project):   skills/install.sh <pack> <dir> --agent <nền-tảng>
+                          → copy pack + tự sinh bảng routing vào AGENTS.md
+                          → agent chủ động nạp đúng pack cho đúng việc
+```
+
+Registry hiện có:
+- `ui-ux-pro-max`
+- `intent-review`
+- `spec-review`
+
+## 8. Ví dụ minh họa
+
+| Ví dụ | Tên ứng dụng |
+|---|---|
+| [`mini-todo-api`](examples/mini-todo-api/) | Todo API — vòng chạy đầu tiên |
+| [`money-web-app`](examples/money-web-app/) | PocketLedger — money-tracking web app with auth |
+
+> Cả hai là walkthrough quy trình, **không dùng để deploy production**.
+
+## 9. Nguồn tham khảo
+
+1. **Anthropic — The AI-native SDLC Playbook** (Claude Academy, 2026) — <https://academy.claude.com/courses/ai-native-sdlc-playbook>
+2. **Microsoft — An AI-led SDLC** (Azure Blog, 2026) — <https://techcommunity.microsoft.com/blog/appsonazureblog/an-ai-led-sdlc-building-an-end-to-end-agentic-software-development-lifecycle-wit/4491896>
+3. **AI-SDLC Framework** (ai-sdlc.io, Apache-2.0) — <https://ai-sdlc.io/docs>
 
 ## 10. Giấy phép
 
-Toàn bộ repo phát hành theo **[Apache License 2.0](LICENSE)** — bạn được tự do sử dụng, sửa đổi và phân phối (kèm các điều khoản ghi nguồn và bảo hộ bằng sáng chế theo license). Các nguồn tham khảo (Anthropic, Microsoft, ai-sdlc.io) được trích dẫn ở mục 7 chỉ nhằm mục đích học tập; kit này là tác phẩm độc lập, không sao chép mã nguồn từ các nguồn đó.
-
----
-
-*Hai file README này được giữ đồng bộ nội dung: [Tiếng Việt](README.md) · [English](README.en.md). Tài liệu phục vụ học tập và áp dụng nội bộ; số liệu trích dẫn có nguồn đầy đủ trong `docs/vi/01-research-synthesis.md`.*
+Phát hành theo **[Apache License 2.0](LICENSE)** — tự do sử dụng, sửa đổi, phân phối kèm điều khoản ghi nguồn và bảo hộ bằng sáng chế. Kit là tác phẩm độc lập; các nguồn tham khảo chỉ được trích dẫn cho mục đích học tập.
