@@ -59,8 +59,32 @@ jobs:
         run: |
           ! node cli/ai-sdlc-kit.mjs init /tmp/nope --skills does-not-exist
           test ! -d /tmp/nope
-      - name: Plugin manifest and kit version agree (one release number)
+      - name: One release number; plugin is SHA-tracked (no pinned version)
         run: |
           V=$(node cli/ai-sdlc-kit.mjs --version)
           test "$V" = "$(node -p 'require("./package.json").version')"
-          test "$V" = "$(node -p 'require("./.claude-plugin/plugin.json").version')"
+          node -e 'const p = require("./.claude-plugin/plugin.json"); if ("version" in p) { console.error("plugin.json must not pin version: Claude Code would then track the release, not commits"); process.exit(1); }'
+          node -e 'require("./hooks/hooks.json")'
+      - name: Plugin-mode init copies no local skills and namespaces routing
+        run: |
+          rm -rf /tmp/plug
+          node cli/ai-sdlc-kit.mjs init /tmp/plug --skills intent-review,spec-review --agent claude --plugin
+          test ! -e /tmp/plug/.claude/skills/intent-review
+          test ! -e /tmp/plug/.claude/skills/spec-review
+          grep -q "| ai-sdlc-kit:intent-review |" /tmp/plug/AGENTS.md
+          node cli/ai-sdlc-kit.mjs update /tmp/plug | grep -q "done:"
+          test ! -e /tmp/plug/.claude/skills/intent-review
+          node cli/ai-sdlc-kit.mjs check /tmp/plug | grep -q "plugin mode"
+      - name: skill command keeps the routing rows of packs already installed
+        run: |
+          rm -rf /tmp/rt
+          node cli/ai-sdlc-kit.mjs init /tmp/rt --skills intent-review --agent claude
+          node cli/ai-sdlc-kit.mjs skill spec-review /tmp/rt --agent claude
+          grep -q "^| intent-review |" /tmp/rt/AGENTS.md
+          grep -q "^| spec-review |" /tmp/rt/AGENTS.md
+      - name: notify is silent unless the project is behind the kit release
+        run: |
+          test -z "$(node cli/ai-sdlc-kit.mjs notify /tmp/rt)"
+          test -z "$(node cli/ai-sdlc-kit.mjs notify /tmp/does-not-exist)"
+          node -e 'const f = "/tmp/rt/.ai-sdlc-kit.json"; const m = require(f); m.kitVersion = "1.6.0"; require("fs").writeFileSync(f, JSON.stringify(m));'
+          node cli/ai-sdlc-kit.mjs notify /tmp/rt | node -e 'const o = JSON.parse(require("fs").readFileSync(0, "utf8")); if (!o.systemMessage || !o.hookSpecificOutput.additionalContext) process.exit(1);'
