@@ -82,6 +82,48 @@ jobs:
           node cli/ai-sdlc-kit.mjs skill spec-review /tmp/rt --agent claude
           grep -q "^| intent-review |" /tmp/rt/AGENTS.md
           grep -q "^| spec-review |" /tmp/rt/AGENTS.md
+      - name: Every agent gets its skill directory and an explicit routing path
+        run: |
+          for pair in claude:.claude/skills cursor:.cursor/skills codex:.agents/skills zcode:.zcode/skills gemini:.gemini/skills copilot:.github/skills; do
+            a=${pair%%:*}; d=${pair#*:}
+            rm -rf /tmp/ag-$a
+            node cli/ai-sdlc-kit.mjs init /tmp/ag-$a --skills intent-review,spec-review --agent $a
+            test -f /tmp/ag-$a/$d/intent-review/SKILL.md
+            grep -qF "$d/<pack>/SKILL.md" /tmp/ag-$a/AGENTS.md
+            bash skills/install.sh spec-review /tmp/ag-$a --agent $a
+            test -f /tmp/ag-$a/$d/spec-review/SKILL.md
+            grep -qF "$d/<pack>/SKILL.md" /tmp/ag-$a/AGENTS.md
+            node cli/ai-sdlc-kit.mjs check /tmp/ag-$a | grep -q "wiring checks pass"
+          done
+      - name: install.sh and the CLI produce identical projects
+        run: |
+          rm -rf /tmp/par-cli /tmp/par-sh
+          node cli/ai-sdlc-kit.mjs init /tmp/par-cli --skills intent-review --agent gemini >/dev/null
+          node cli/ai-sdlc-kit.mjs init /tmp/par-sh --skills intent-review --agent gemini >/dev/null
+          node cli/ai-sdlc-kit.mjs skill spec-review /tmp/par-cli --agent gemini >/dev/null
+          bash skills/install.sh spec-review /tmp/par-sh --agent gemini >/dev/null
+          diff -r -x .ai-sdlc-kit.json /tmp/par-cli /tmp/par-sh
+      - name: Routing lists packs found on disk even without a manifest
+        run: |
+          rm -rf /tmp/nomani
+          node cli/ai-sdlc-kit.mjs init /tmp/nomani --skills intent-review --agent cursor >/dev/null
+          rm /tmp/nomani/.ai-sdlc-kit.json
+          bash skills/install.sh spec-review /tmp/nomani --agent cursor >/dev/null
+          grep -q "^| intent-review |" /tmp/nomani/AGENTS.md
+          grep -q "^| spec-review |" /tmp/nomani/AGENTS.md
+      - name: Gemini reads AGENTS.md through a GEMINI.md import
+        run: |
+          grep -qx "@AGENTS.md" /tmp/ag-gemini/GEMINI.md
+          echo "# gemini notes" > /tmp/ag-gemini/GEMINI.md
+          node cli/ai-sdlc-kit.mjs check /tmp/ag-gemini | grep -q "ignores AGENTS.md"
+          node cli/ai-sdlc-kit.mjs skill spec-review /tmp/ag-gemini --agent gemini >/dev/null
+          grep -qx "@AGENTS.md" /tmp/ag-gemini/GEMINI.md
+      - name: A CLAUDE.md that hides AGENTS.md is flagged by check
+        run: |
+          echo "# my notes" > /tmp/ag-claude/CLAUDE.md
+          node cli/ai-sdlc-kit.mjs check /tmp/ag-claude | grep -q "ignores AGENTS.md"
+          echo "@AGENTS.md" >> /tmp/ag-claude/CLAUDE.md
+          ! node cli/ai-sdlc-kit.mjs check /tmp/ag-claude | grep -q "ignores AGENTS.md"
       - name: notify is silent unless the project is behind the kit release
         run: |
           test -z "$(node cli/ai-sdlc-kit.mjs notify /tmp/rt)"
