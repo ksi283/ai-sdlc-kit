@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/cli/ai-sdlc-kit.mjs\" notify \"${CLAUDE_PROJECT_DIR}\" --lang vi"
+          }
+        ]
+      }
+    ]
+  }
+}
