@@ -1,0 +1,12 @@
+{
+  "name": "ai-sdlc-kit-marketplace",
+  "description": "Marketplace for the ai-sdlc-kit plugin (repo root is the plugin)",
+  "owner": { "name": "ksi283" },
+  "plugins": [
+    {
+      "name": "ai-sdlc-kit",
+      "source": "./",
+      "description": "Intent and spec review skills plus wiring checks for AI-SDLC projects"
+    }
+  ]
+}

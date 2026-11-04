@@ -1,0 +1,10 @@
+{
+  "name": "ai-sdlc-kit",
+  "version": "1.7.0",
+  "description": "AI-SDLC gates, intent/spec review skills and project wiring checks (ai-sdlc-kit CLI) for Claude Code",
+  "author": { "name": "ksi283" },
+  "homepage": "https://github.com/ksi283/ai-sdlc-kit",
+  "repository": "https://github.com/ksi283/ai-sdlc-kit",
+  "license": "Apache-2.0",
+  "keywords": ["ai-sdlc", "sdlc", "governance", "skills", "gates"]
+}
