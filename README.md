@@ -4,7 +4,7 @@
 
 **Bộ quy trình phát triển phần mềm tăng cường AI — khung lõi, template dùng ngay, CLI và ứng dụng kiểm chứng.**
 
-[![version](https://img.shields.io/badge/version-1.7.0-blue)]() [![license](https://img.shields.io/badge/license-Apache--2.0-green)](LICENSE) [![node](https://img.shields.io/badge/node-%E2%89%A518-339933)]() [![docs](https://img.shields.io/badge/docs-EN%20%7C%20VI-informational)]()
+[![version](https://img.shields.io/badge/version-1.7.1-blue)]() [![license](https://img.shields.io/badge/license-Apache--2.0-green)](LICENSE) [![node](https://img.shields.io/badge/node-%E2%89%A518-339933)]() [![docs](https://img.shields.io/badge/docs-EN%20%7C%20VI-informational)]()
 
 **Tiếng Việt** · [English](README.en.md)
 

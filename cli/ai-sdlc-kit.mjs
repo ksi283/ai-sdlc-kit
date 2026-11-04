@@ -7,7 +7,7 @@ import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const KIT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const VERSION = '1.7.0';
+const VERSION = '1.7.1';
 const T = (p) => join(KIT_ROOT, 'templates', p);
 const S = (p) => join(KIT_ROOT, 'skills', p);
 
