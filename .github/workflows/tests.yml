@@ -59,3 +59,8 @@ jobs:
         run: |
           ! node cli/ai-sdlc-kit.mjs init /tmp/nope --skills does-not-exist
           test ! -d /tmp/nope
+      - name: Plugin manifest and kit version agree (one release number)
+        run: |
+          V=$(node cli/ai-sdlc-kit.mjs --version)
+          test "$V" = "$(node -p 'require("./package.json").version')"
+          test "$V" = "$(node -p 'require("./.claude-plugin/plugin.json").version')"
