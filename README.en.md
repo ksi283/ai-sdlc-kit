@@ -158,7 +158,7 @@ npm start                                                   # → http://localho
 A skill pack = a packaged capability for AI agents (design, review standards, domain conventions). Two separated flows:
 
 ```
-PUBLISH (once, via PR):   skills/_template/ → skills/<name>/ → register in registry.yml
+PUBLISH (once, via PR):   templates/skill/ → skills/<name>/ → register in registry.yml
 INSTALL  (per project):   skills/install.sh <pack> <dir> --agent <platform>
                           → copy pack + generate the routing block in AGENTS.md
                           → agents proactively load the right pack for the right work

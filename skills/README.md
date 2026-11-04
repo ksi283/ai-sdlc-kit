@@ -37,7 +37,7 @@ common misunderstanding is running `install.sh` first. It refuses exactly that:
 
 ```
 FLOW A — PUBLISH A NEW SKILL (once, via PR — human review required)
-  1. write it       skills/_template/ → skills/<name>/SKILL.md  (description = "USE WHEN …" trigger)
+  1. write it       templates/skill/SKILL.md → skills/<name>/SKILL.md  (description = "USE WHEN …" trigger)
   2. REGISTER it    skills/registry.yml entry (class, version, license, auto_activate)  ← via PR
   3. install.sh     per project, whenever needed
 
@@ -58,7 +58,7 @@ unregistered packs — that refusal is the review gate doing its job.
 | `external` | the pack's own repo (npm/CLI) | the pack's installer, version pinned here | [`ui-ux-pro-max` 2.15.0 (MIT)](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) |
 | `local` | **this repo**, `skills/<name>/SKILL.md` | `skills/install.sh` (idempotent copy) | [`intent-review`](intent-review/SKILL.md) — the Intent-Ready gate as an agent skill |
 
-**User-developed skills** are first-class: copy [`skills/_template/SKILL.md`](_template/SKILL.md)
+**User-developed skills** are first-class: copy [`templates/skill/SKILL.md`](../templates/skill/SKILL.md)
 to `skills/<name>/`, write the description as a real trigger ("USE WHEN …"), add the
 registry entry, PR. `install.sh` distributes it to any project, any agent directory
 (`.claude/` `.cursor/` `.agents/` `.zcode/`). Personal skills kept outside the kit

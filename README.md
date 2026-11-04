@@ -159,7 +159,7 @@ npm start                                                   # → http://localho
 Skill pack = năng lực đóng gói cho AI agent (thiết kế, review chuẩn, quy ước domain). Hai luồng tách bạch:
 
 ```
-PUBLISH (1 lần, qua PR):  skills/_template/ → skills/<tên>/ → đăng ký registry.yml
+PUBLISH (1 lần, qua PR):  templates/skill/ → skills/<tên>/ → đăng ký registry.yml
 INSTALL  (mỗi project):   skills/install.sh <pack> <dir> --agent <nền-tảng>
                           → copy pack + tự sinh bảng routing vào AGENTS.md
                           → agent chủ động nạp đúng pack cho đúng việc

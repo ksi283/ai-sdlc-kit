@@ -54,7 +54,7 @@ packs:
   # ── local packs (user-developed; source of truth in this repo) ─────
   - name: intent-review
     class: local
-    source: skills/intent-review/          # SKILL.md — scaffold new skills from skills/_template/
+    source: skills/intent-review/          # SKILL.md — scaffold new skills from templates/skill/
     version: "0.1.0"
     license: Apache-2.0 (inherits the kit)
     purpose: Enforce the Intent-Ready gate — evidence, measurable metric, non-goals, security screen, human owner.
@@ -72,7 +72,7 @@ packs:
     update_flow: edit source here → PR → re-run install.sh (or `ai-sdlc-kit update`) in each project
       (idempotent copy + AGENTS.md auto-block refresh)
 
-  # To publish your own skill: copy skills/_template/ to skills/<name>/, fill it in,
+  # To publish your own skill: copy templates/skill/ to skills/<name>/, fill it in,
   # add an entry shaped like the one above, then PR. install.sh handles the rest.
 
   - name: spec-review
