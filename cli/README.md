@@ -34,6 +34,8 @@ node cli/ai-sdlc-kit.mjs --help
 | Lệnh / tùy chọn | Chức năng |
 |---|---|
 | `init <dir>` | Scaffold project: AGENTS.md, templates, policy, CI, CODEOWNERS + auto-activation skills |
+| `init <dir> --plugin` | (chỉ `claude`) không copy skill nội bộ: skill lấy từ plugin Claude Code `ai-sdlc-kit`, routing dùng tên `ai-sdlc-kit:<pack>` |
+| `notify [dir]` | Hook SessionStart của plugin: nhắc khi dự án dựng bằng kit cũ hơn; im lặng khi không cần |
 | `check [dir]` | Báo cáo wiring 10 điểm — **exit 1 khi thiếu**, dùng được như bước CI |
 | `skill <pack> <dir>` | Cài một pack từ [`skills/registry.yml`](../skills/registry.yml) vào project |
 | `update [dir]` | Đưa project lên phiên bản kit hiện tại: file chưa chỉnh được cập nhật, **file đã chỉnh được giữ nguyên**, file thiếu khôi phục, skills làm mới |
@@ -46,6 +48,7 @@ node cli/ai-sdlc-kit.mjs --help
 
 - **Idempotent**: chạy lại `init`/`skill`/`update` không nhân đôi block AGENTS.md.
 - **`.ai-sdlc-kit.json`** (do `init` ghi) lưu phiên bản kit + hash baseline — commit file này; `update` dùng nó để không bao giờ đè chỉnh sửa của project.
+- **Chế độ plugin** (`init --plugin`): `.ai-sdlc-kit.json` ghi `"mode": "plugin"`; `update` và `skill` không copy skill nội bộ nữa. Dự án cũ không có trường `mode` được coi là `copy`.
 - **Registry-first**: chỉ cài pack đã đăng ký trong `skills/registry.yml` (qua PR).
 - Repo đang private → npx/npm cài từ GitHub cần quyền truy cập repo của bạn.
 - Bản thân kit không phải package để import (`private: true`); publish npm là quyết định của v2.

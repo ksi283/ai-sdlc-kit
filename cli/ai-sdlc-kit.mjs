@@ -21,11 +21,13 @@ const LANG = (() => {
 const HELP_EN = `ai-sdlc-kit v${VERSION} — scaffold and verify AI-SDLC projects
 
 Usage:
-  ai-sdlc-kit init <dir> [--agent claude|cursor|codex|zcode] [--skills <list>] [--force] [--dry-run] [--lang vi|en]
+  ai-sdlc-kit init <dir> [--agent claude|cursor|codex|zcode] [--skills <list>] [--plugin] [--force] [--dry-run] [--lang vi|en]
       Scaffold a new AI-SDLC project: starter files, policy, CI, skill auto-activation.
       --skills is a comma list from skills/registry.yml (default: intent-review).
       --agent selects the target agent's skill directory (default: claude, printed
       when applied). '--ai' still works as a deprecated alias.
+      --plugin (claude only) copies no local skills: they come from the ai-sdlc-kit
+      Claude Code plugin, namespaced ai-sdlc-kit:<pack>.
 
   ai-sdlc-kit check [dir]
       Report the project's kit wiring (AGENTS.md, gates, CI, CODEOWNERS, intents…).
@@ -40,6 +42,10 @@ Usage:
       project-modified files are kept, missing files restored, skills
       refreshed and the AGENTS.md routing block rewired.
 
+  ai-sdlc-kit notify [dir]
+      Claude Code SessionStart hook. Prints a version-change request when the
+      project was scaffolded by an older kit release; silent otherwise.
+
   ai-sdlc-kit --help | --version
       --lang vi|en switches this help and progress messages (default: en).
 
@@ -52,11 +58,13 @@ How to run (pick one):
 const HELP_VI = `ai-sdlc-kit v${VERSION} — dựng khung và kiểm chứng dự án AI-SDLC
 
 Cách dùng:
-  ai-sdlc-kit init <dir> [--agent claude|cursor|codex|zcode] [--skills <danh-sách>] [--force] [--dry-run] [--lang vi|en]
+  ai-sdlc-kit init <dir> [--agent claude|cursor|codex|zcode] [--skills <danh-sách>] [--plugin] [--force] [--dry-run] [--lang vi|en]
       Dựng project AI-SDLC mới: file khởi động, policy, CI, auto-activation skill.
       --skills là danh sách phẩy tách từ skills/registry.yml (mặc định: intent-review).
       --agent chọn thư mục skill của nền tảng agent nhận cài (mặc định: claude, sẽ
       in thông báo khi áp dụng). '--ai' vẫn chạy như alias đã ngừng khuyến nghị.
+      --plugin (chỉ claude) không copy skill nội bộ: skill lấy từ plugin Claude Code
+      ai-sdlc-kit, đặt tên ai-sdlc-kit:<pack>.
 
   ai-sdlc-kit check [dir]
       Báo cáo 10 điểm wiring của project (AGENTS.md, gates, CI, CODEOWNERS, intents…).
@@ -70,6 +78,10 @@ Cách dùng:
       chỉ được cập nhật khi CHƯA bị project chỉnh sửa (so hash qua
       .ai-sdlc-kit.json); file đã chỉnh được giữ nguyên, file thiếu được
       khôi phục, skills làm mới và block routing AGENTS.md nối lại.
+
+  ai-sdlc-kit notify [dir]
+      Hook SessionStart của Claude Code. In yêu cầu đổi phiên bản khi dự án được
+      dựng bằng kit cũ hơn; im lặng trong các trường hợp khác.
 
   ai-sdlc-kit --help | --version
       --lang vi|en đổi ngôn ngữ help và thông báo tiến trình (mặc định: en).
@@ -90,6 +102,11 @@ const STR = {
     wired: (p) => `  auto-activation block wired → ${p}`,
     local: (n, v, d) => `  skill (local)    ${n} ${v} → ${d}`,
     external: (n, v) => `  skill (external) ${n} ${v} — run its pinned installer, then re-run 'skill' or 'init' to refresh the routing block.`,
+    pluginLocal: (n) => `  skill (plugin)   ${n} — not copied; provided by the ai-sdlc-kit Claude Code plugin as ai-sdlc-kit:${n}.`,
+    notify: (from, to) => ({
+      user: `ai-sdlc-kit: this project was scaffolded with kit ${from}; the installed plugin is kit ${to}. This is a version change for you to decide — run 'npx github:ksi283/ai-sdlc-kit update <dir>' to adopt it (project-modified files are kept), or leave it as is.`,
+      agent: `ai-sdlc-kit ${to} is available for this project (scaffolded at ${from}). Do not run 'update' on your own; mention the choice to the user and let them decide.`,
+    }),
   },
   vi: {
     scaffolding: (dir, ai, skills, dry) => dry
@@ -100,6 +117,11 @@ const STR = {
     wired: (p) => `  đã dây block auto-activation → ${p}`,
     local: (n, v, d) => `  skill (local)    ${n} ${v} → ${d}`,
     external: (n, v) => `  skill (external) ${n} ${v} — chạy installer riêng có pin version, rồi chạy lại 'skill' hoặc 'init' để làm mới block routing.`,
+    pluginLocal: (n) => `  skill (plugin)   ${n} — không copy; do plugin ai-sdlc-kit của Claude Code cung cấp, tên ai-sdlc-kit:${n}.`,
+    notify: (from, to) => ({
+      user: `ai-sdlc-kit: dự án này được dựng bằng kit ${from}; plugin đang cài là kit ${to}. Đây là thay đổi phiên bản, cần bạn quyết định — chạy 'npx github:ksi283/ai-sdlc-kit update <thư-mục>' để áp dụng (file bạn đã chỉnh được giữ nguyên), hoặc bỏ qua.`,
+      agent: `kit ${to} có sẵn cho dự án này (đang ở ${from}). Đừng tự chạy 'update'; hãy nêu lựa chọn này cho người dùng và để họ quyết định.`,
+    }),
   },
 }[LANG];
 
@@ -167,7 +189,7 @@ function readRegistryPacks() {
   return packs.filter(p => !p.name.startsWith('<'));
 }
 
-function skillRows(names) {
+function skillRows(names, mode = MODE_COPY) {
   const packs = readRegistryPacks();
   const chosen = names.map(n => {
     const p = packs.find(x => x.name === n);
@@ -177,12 +199,26 @@ function skillRows(names) {
   const rows = chosen.map(p => {
     const stages = (p.stages?.length ? p.stages.join(', ') : '-');
     const use = (p.use?.length ? p.use.join('; ') : (p.purpose ?? '-'));
-    return `| ${p.name} | ${p.version ?? '-'} | ${p.capability ?? '-'} | ${stages} | ${use} |`;
+    const label = mode === MODE_PLUGIN && p.class === 'local' ? `${PLUGIN_NS}:${p.name}` : p.name;
+    return `| ${label} | ${p.version ?? '-'} | ${p.capability ?? '-'} | ${stages} | ${use} |`;
   });
   return { rows, packs: chosen };
 }
 
-function wireAgentsBlock(projectDir, rows) {
+function wireAgentsBlock(projectDir, rows, mode = MODE_COPY) {
+  const routing = mode === MODE_PLUGIN
+    ? [
+      '**Routing rule:** before starting work that matches a capability above, invoke the',
+      "pack's skill by the name in the Pack column (`ai-sdlc-kit:<pack>` comes from the",
+      'ai-sdlc-kit Claude Code plugin; other packs live in the agent skill directory) and',
+      'follow it; record the decisions the pack produces in project-owned knowledge',
+      '(e.g. `DESIGN-SYSTEM.md`).',
+    ]
+    : [
+      '**Routing rule:** before starting work that matches a capability above, open the',
+      "pack's SKILL.md (in the agent skill directory) and follow it; record the decisions",
+      'the pack produces in project-owned knowledge (e.g. `DESIGN-SYSTEM.md`).',
+    ];
   const block = [
     '<!-- skills:auto:start (managed by ai-sdlc-kit CLI — do not edit) -->',
     '## Installed skill packs — auto-activation routing',
@@ -191,9 +227,7 @@ function wireAgentsBlock(projectDir, rows) {
     '|---|---|---|---|---|',
     ...rows,
     '',
-    '**Routing rule:** before starting work that matches a capability above, open the',
-    "pack's SKILL.md (in the agent skill directory) and follow it; record the decisions",
-    'the pack produces in project-owned knowledge (e.g. `DESIGN-SYSTEM.md`).',
+    ...routing,
     '<!-- skills:auto:end -->',
   ].join('\n');
   const path = join(projectDir, 'AGENTS.md');
@@ -219,6 +253,11 @@ function printExternalPack(pack) {
 
 // ── kit-owned scaffold set — shared by init & update ────────────────────
 const MANIFEST = '.ai-sdlc-kit.json';
+// How a project receives its local skills: 'copy' (default, into <agent>/skills/)
+// or 'plugin' (provided by the ai-sdlc-kit Claude Code plugin, not copied).
+const MODE_COPY = 'copy';
+const MODE_PLUGIN = 'plugin';
+const PLUGIN_NS = 'ai-sdlc-kit'; // Claude Code namespaces plugin skills as <plugin>:<skill>
 const AGENT_DIRS = {
   claude: '.claude/skills', cursor: '.cursor/skills', codex: '.agents/skills', zcode: '.zcode/skills',
 };
@@ -249,6 +288,19 @@ function writeManifest(dir, manifest) {
   writeFileSync(join(dir, MANIFEST), JSON.stringify(manifest, null, 2) + '\n');
 }
 
+function readManifestIfAny(dir) {
+  try { return JSON.parse(readFileSync(join(dir, MANIFEST), 'utf8')); } catch { return null; }
+}
+const projectMode = (dir) => readManifestIfAny(dir)?.mode ?? MODE_COPY;
+
+// Routing rows must cover every pack already installed in the project, not only the
+// one being added — otherwise AGENTS.md silently drops the other packs' routing.
+function installedSkillNames(dir, pack) {
+  const registered = new Set(readRegistryPacks().map(p => p.name));
+  const installed = (readManifestIfAny(dir)?.skills ?? []).map(s => s.name).filter(n => registered.has(n));
+  return [...new Set([...installed, pack])];
+}
+
 function readManifest(dir) {
   const p = join(dir, MANIFEST);
   if (!existsSync(p)) {
@@ -265,12 +317,13 @@ function readManifest(dir) {
 function doInit(args) {
   const dir = resolve(args[0] ?? '');
   if (!dir) fail('init requires a target directory');
-  let ai = null, skills = ['intent-review'], force = false, dry = false;
+  let ai = null, skills = ['intent-review'], force = false, dry = false, plugin = false;
   for (let i = 1; i < args.length; i++) {
     if (args[i] === '--agent' || args[i] === '--ai') ai = args[++i] ?? fail(`${args[i - 1]} needs a value`);
     else if (args[i] === '--skills') skills = (args[++i] ?? '').split(',').map(s => s.trim()).filter(Boolean);
     else if (args[i] === '--force') force = true;
     else if (args[i] === '--dry-run') dry = true;
+    else if (args[i] === '--plugin') plugin = true;
     else if (args[i] === '--lang') { i++; continue; } // already parsed globally
     else fail(`unknown option '${args[i]}'`);
   }
@@ -279,11 +332,13 @@ function doInit(args) {
     console.log(`note: no --agent given — defaulting to claude (.claude/skills/). Pass --agent claude|cursor|codex|zcode to choose the target.`);
   }
   const agentDir = AGENT_DIRS[ai] ?? fail(`unknown --agent '${ai}' (claude|cursor|codex|zcode)`);
+  if (plugin && ai !== 'claude') fail("--plugin needs --agent claude (plugin skills are a Claude Code feature)");
+  const mode = plugin ? MODE_PLUGIN : MODE_COPY;
   if (existsSync(dir) && readdirSync(dir).length && !force) {
     fail(`'${dir}' is not empty — use --force to scaffold into it anyway`);
   }
   // fail fast on unknown packs BEFORE writing anything
-  const { rows, packs } = skillRows(skills);
+  const { rows, packs } = skillRows(skills, mode);
 
   const files = scaffoldFiles();
   console.log(STR.scaffolding(dir, ai, skills.join(', '), dry));
@@ -309,6 +364,7 @@ function doInit(args) {
       kitVersion: VERSION,
       scaffoldedAt: new Date().toISOString(),
       agent: ai,
+      mode,
       skills: packs.map((p) => ({ name: p.name, version: p.version ?? '', class: p.class })),
       files: baselines,
     };
@@ -323,8 +379,12 @@ function doInit(args) {
   if (skills.length) {
     if (dry) { for (const p of packs) console.log(`  ${p.class === 'local' ? 'skill (local)   ' : 'skill (external)'} ${p.name} ${p.version ?? ''}`); }
     else {
-      for (const p of packs) p.class === 'local' ? installLocalPack(p, dir, agentDir) : printExternalPack(p);
-      wireAgentsBlock(dir, rows);
+      for (const p of packs) {
+        if (p.class !== 'local') printExternalPack(p);
+        else if (mode === MODE_PLUGIN) console.log(STR.pluginLocal(p.name));
+        else installLocalPack(p, dir, agentDir);
+      }
+      wireAgentsBlock(dir, rows, mode);
     }
   }
   console.log(STR.done(dry));
@@ -354,6 +414,9 @@ function doCheck(args) {
   if (existsSync(join(dir, MANIFEST))) {
     try {
       const m = JSON.parse(readFileSync(join(dir, MANIFEST), 'utf8'));
+      if ((m.mode ?? MODE_COPY) === MODE_PLUGIN) {
+        console.log(' note: plugin mode — local skills come from the ai-sdlc-kit Claude Code plugin (enable it in Claude Code).');
+      }
       if (m.kitVersion && m.kitVersion !== VERSION) {
         console.log(` note: kit update available (${m.kitVersion} → ${VERSION}) — run 'ai-sdlc-kit update ${args[0] ?? '.'}'`);
       } else {
@@ -377,10 +440,14 @@ function doSkill(args) {
   }
   const agentDir = { claude: '.claude/skills', cursor: '.cursor/skills', codex: '.agents/skills', zcode: '.zcode/skills' }[ai]
     ?? fail(`unknown --agent '${ai}' (claude|cursor|codex|zcode)`);
-  const { rows, packs } = skillRows([pack]);
-  const p = packs[0];
-  p.class === 'local' ? installLocalPack(p, resolve(dir), agentDir) : printExternalPack(p);
-  wireAgentsBlock(resolve(dir), rows);
+  const target = resolve(dir);
+  const mode = projectMode(target);
+  const { rows, packs } = skillRows(installedSkillNames(target, pack), mode);
+  const p = packs.find(x => x.name === pack);
+  if (p.class !== 'local') printExternalPack(p);
+  else if (mode === MODE_PLUGIN) console.log(STR.pluginLocal(p.name));
+  else installLocalPack(p, target, agentDir);
+  wireAgentsBlock(target, rows, mode);
 }
 
 // ── update ──────────────────────────────────────────────────────────────
@@ -394,6 +461,7 @@ function doUpdate(args) {
     else fail(`unknown option '${args[i]}'`);
   }
   const m = readManifest(dir);
+  const mode = m.mode ?? MODE_COPY;
   const from = m.kitVersion ?? 'unknown';
   if (from === VERSION) {
     console.log(`'${dir}' is already at kit ${VERSION} — re-running update is safe (repairs drifted files).`);
@@ -445,12 +513,12 @@ function doUpdate(args) {
       if ((p.version ?? '') !== (s.version ?? '')) {
         console.log(`  ↑ skill ${s.name} ${s.version || '?'} → ${p.version ?? '?'}`);
       }
-      if (p.class === 'local') { if (!dry) installLocalPack(p, dir, agentDir); }
+      if (p.class === 'local') { if (!dry && mode === MODE_COPY) installLocalPack(p, dir, agentDir); }
       else console.log(STR.external(p.name, p.version ?? ''));
     }
     if (names.length && !dry) {
-      const { rows } = skillRows(names);
-      wireAgentsBlock(dir, rows);
+      const { rows } = skillRows(names, mode);
+      wireAgentsBlock(dir, rows, mode);
     }
   }
 
@@ -474,6 +542,26 @@ function doUpdate(args) {
 }
 
 // ── dispatch ────────────────────────────────────────────────────────────
+// ── notify (Claude Code SessionStart hook) ──────────────────────────────
+// Silent unless the project was scaffolded by an OLDER kit release. Output is one
+// JSON object: systemMessage is shown to the user, additionalContext to the agent,
+// which is told not to apply the update on its own — the decision stays human.
+function semverLess(a, b) {
+  const pa = a.split('.').map(Number), pb = b.split('.').map(Number);
+  for (let i = 0; i < 3; i++) if (pa[i] !== pb[i]) return pa[i] < pb[i];
+  return false;
+}
+function doNotify(args) {
+  const dirArg = args.find((a, i) => !a.startsWith('--') && args[i - 1] !== '--lang') ?? '.';
+  const from = readManifestIfAny(resolve(dirArg))?.kitVersion;
+  if (!/^\d+\.\d+\.\d+$/.test(from ?? '') || !semverLess(from, VERSION)) return;
+  const s = STR.notify(from, VERSION);
+  console.log(JSON.stringify({
+    systemMessage: s.user,
+    hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: s.agent },
+  }));
+}
+
 if (cmd === '--version' || cmd === '-v') { console.log(VERSION); process.exit(0); }
 if (cmd === '--help' || cmd === '-h' || !cmd) { console.log(LANG === 'vi' ? HELP_VI : HELP_EN); process.exit(0); }
 const rest = process.argv.slice(3);
@@ -481,4 +569,5 @@ if (cmd === 'init') doInit(rest);
 else if (cmd === 'check') doCheck(rest);
 else if (cmd === 'skill') doSkill(rest);
 else if (cmd === 'update') doUpdate(rest);
+else if (cmd === 'notify') doNotify(rest);
 else fail(`unknown command '${cmd}' — try --help`);

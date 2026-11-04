@@ -34,6 +34,8 @@ node cli/ai-sdlc-kit.mjs --help
 | Command / option | What it does |
 |---|---|
 | `init <dir>` | Scaffold a project: AGENTS.md, templates, policy, CI, CODEOWNERS + skill auto-activation |
+| `init <dir> --plugin` | (`claude` only) copies no local skills: they come from the `ai-sdlc-kit` Claude Code plugin, and routing uses `ai-sdlc-kit:<pack>` |
+| `notify [dir]` | Plugin SessionStart hook: asks for a decision when the project was scaffolded by an older kit release; silent otherwise |
 | `check [dir]` | 10-point wiring report — **exit 1 when incomplete**, CI-usable |
 | `skill <pack> <dir>` | Install a pack from [`skills/registry.yml`](../skills/registry.yml) into a project |
 | `update [dir]` | Bring a project to the current kit: unmodified files updated, **project-modified files kept**, missing files restored, skills refreshed |
@@ -46,6 +48,7 @@ node cli/ai-sdlc-kit.mjs --help
 
 - **Idempotent**: re-running `init`/`skill`/`update` never duplicates the AGENTS.md block.
 - **`.ai-sdlc-kit.json`** (written by `init`) records the kit version + baseline hashes — commit it; `update` uses it so project edits are never overwritten.
+- **Plugin mode** (`init --plugin`): `.ai-sdlc-kit.json` records `"mode": "plugin"`; `update` and `skill` stop copying local skills. Projects without a `mode` field are treated as `copy`.
 - **Registry-first**: only packs registered in `skills/registry.yml` (via PR) are installable.
 - Private repo → npx/npm installs from GitHub require your repo credentials.
 - The kit itself is not an importable package (`private: true`); npm publishing is a deliberate v2 decision.
