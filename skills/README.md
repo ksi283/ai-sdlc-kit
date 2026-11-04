@@ -61,7 +61,7 @@ unregistered packs — that refusal is the review gate doing its job.
 **User-developed skills** are first-class: copy [`templates/skill/SKILL.md`](../templates/skill/SKILL.md)
 to `skills/<name>/`, write the description as a real trigger ("USE WHEN …"), add the
 registry entry, PR. `install.sh` distributes it to any project, any agent directory
-(`.claude/` `.cursor/` `.agents/` `.zcode/`). Personal skills kept outside the kit
+(`.claude/` `.cursor/` `.agents/` `.zcode/` `.gemini/` `.github/skills/`). Personal skills kept outside the kit
 (e.g. `~/.claude/skills/`) are allowed but carry no kit governance — they are a private
 matter, not team knowledge.
 

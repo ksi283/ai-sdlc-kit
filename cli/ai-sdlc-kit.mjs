@@ -21,7 +21,7 @@ const LANG = (() => {
 const HELP_EN = `ai-sdlc-kit v${VERSION} — scaffold and verify AI-SDLC projects
 
 Usage:
-  ai-sdlc-kit init <dir> [--agent claude|cursor|codex|zcode] [--skills <list>] [--plugin] [--force] [--dry-run] [--lang vi|en]
+  ai-sdlc-kit init <dir> [--agent claude|cursor|codex|zcode|gemini|copilot] [--skills <list>] [--plugin] [--force] [--dry-run] [--lang vi|en]
       Scaffold a new AI-SDLC project: starter files, policy, CI, skill auto-activation.
       --skills is a comma list from skills/registry.yml (default: intent-review).
       --agent selects the target agent's skill directory (default: claude, printed
@@ -58,7 +58,7 @@ How to run (pick one):
 const HELP_VI = `ai-sdlc-kit v${VERSION} — dựng khung và kiểm chứng dự án AI-SDLC
 
 Cách dùng:
-  ai-sdlc-kit init <dir> [--agent claude|cursor|codex|zcode] [--skills <danh-sách>] [--plugin] [--force] [--dry-run] [--lang vi|en]
+  ai-sdlc-kit init <dir> [--agent claude|cursor|codex|zcode|gemini|copilot] [--skills <danh-sách>] [--plugin] [--force] [--dry-run] [--lang vi|en]
       Dựng project AI-SDLC mới: file khởi động, policy, CI, auto-activation skill.
       --skills là danh sách phẩy tách từ skills/registry.yml (mặc định: intent-review).
       --agent chọn thư mục skill của nền tảng agent nhận cài (mặc định: claude, sẽ
@@ -205,7 +205,7 @@ function skillRows(names, mode = MODE_COPY) {
   return { rows, packs: chosen };
 }
 
-function wireAgentsBlock(projectDir, rows, mode = MODE_COPY) {
+function wireAgentsBlock(projectDir, rows, mode = MODE_COPY, agentDir = '.claude/skills') {
   const routing = mode === MODE_PLUGIN
     ? [
       '**Routing rule:** before starting work that matches a capability above, invoke the',
@@ -216,7 +216,7 @@ function wireAgentsBlock(projectDir, rows, mode = MODE_COPY) {
     ]
     : [
       '**Routing rule:** before starting work that matches a capability above, open the',
-      "pack's SKILL.md (in the agent skill directory) and follow it; record the decisions",
+      "pack's SKILL.md at `" + agentDir + "/<pack>/SKILL.md` and follow it; record the decisions",
       'the pack produces in project-owned knowledge (e.g. `DESIGN-SYSTEM.md`).',
     ];
   const block = [
@@ -260,7 +260,28 @@ const MODE_PLUGIN = 'plugin';
 const PLUGIN_NS = 'ai-sdlc-kit'; // Claude Code namespaces plugin skills as <plugin>:<skill>
 const AGENT_DIRS = {
   claude: '.claude/skills', cursor: '.cursor/skills', codex: '.agents/skills', zcode: '.zcode/skills',
+  gemini: '.gemini/skills', copilot: '.github/skills',
 };
+
+// Agents that do not read AGENTS.md by default get a one-line entry file that imports
+// it. Claude Code is covered by the check note instead (it reads AGENTS.md on its own
+// when no CLAUDE.md is present).
+const ENTRY_FILES = { gemini: 'GEMINI.md' };
+function wireAgentEntry(dir, agent) {
+  const file = ENTRY_FILES[agent];
+  if (!file) return;
+  const path = join(dir, file);
+  if (!existsSync(path)) {
+    writeFileSync(path, `# ${file}\n\n@AGENTS.md\n`);
+    console.log(`  ${file} created — imports AGENTS.md`);
+    return;
+  }
+  const text = readFileSync(path, 'utf8');
+  if (!/^@AGENTS\.md\s*$/m.test(text)) {
+    writeFileSync(path, text.replace(/\s*$/, '\n\n@AGENTS.md\n'));
+    console.log(`  ${file} — added the @AGENTS.md import`);
+  }
+}
 
 function scaffoldFiles() {
   return [
@@ -293,12 +314,20 @@ function readManifestIfAny(dir) {
 }
 const projectMode = (dir) => readManifestIfAny(dir)?.mode ?? MODE_COPY;
 
-// Routing rows must cover every pack already installed in the project, not only the
-// one being added — otherwise AGENTS.md silently drops the other packs' routing.
-function installedSkillNames(dir, pack) {
-  const registered = new Set(readRegistryPacks().map(p => p.name));
-  const installed = (readManifestIfAny(dir)?.skills ?? []).map(s => s.name).filter(n => registered.has(n));
-  return [...new Set([...installed, pack])];
+// Routing rows must cover every local pack installed in the project, whether the
+// manifest or the files on disk show it. A project without a manifest, or one edited
+// by hand, must not lose packs from AGENTS.md.
+function installedSkillNames(dir, agentDir, mode, pack = null) {
+  const packs = readRegistryPacks();
+  const known = new Set(packs.map(p => p.name));
+  const names = new Set((readManifestIfAny(dir)?.skills ?? []).map(s => s.name).filter(n => known.has(n)));
+  if (mode === MODE_COPY) {
+    for (const p of packs) {
+      if (p.class === 'local' && existsSync(join(dir, agentDir, p.name, 'SKILL.md'))) names.add(p.name);
+    }
+  }
+  if (pack) names.add(pack);
+  return [...names];
 }
 
 function readManifest(dir) {
@@ -329,9 +358,9 @@ function doInit(args) {
   }
   if (skills.length && !ai) {
     ai = 'claude';
-    console.log(`note: no --agent given — defaulting to claude (.claude/skills/). Pass --agent claude|cursor|codex|zcode to choose the target.`);
+    console.log(`note: no --agent given — defaulting to claude (.claude/skills/). Pass --agent claude|cursor|codex|zcode|gemini|copilot to choose the target.`);
   }
-  const agentDir = AGENT_DIRS[ai] ?? fail(`unknown --agent '${ai}' (claude|cursor|codex|zcode)`);
+  const agentDir = AGENT_DIRS[ai] ?? fail(`unknown --agent '${ai}' (claude|cursor|codex|zcode|gemini|copilot)`);
   if (plugin && ai !== 'claude') fail("--plugin needs --agent claude (plugin skills are a Claude Code feature)");
   const mode = plugin ? MODE_PLUGIN : MODE_COPY;
   if (existsSync(dir) && readdirSync(dir).length && !force) {
@@ -384,9 +413,10 @@ function doInit(args) {
         else if (mode === MODE_PLUGIN) console.log(STR.pluginLocal(p.name));
         else installLocalPack(p, dir, agentDir);
       }
-      wireAgentsBlock(dir, rows, mode);
+      wireAgentsBlock(dir, rows, mode, agentDir);
     }
   }
+  if (!dry) wireAgentEntry(dir, ai);
   console.log(STR.done(dry));
 }
 
@@ -410,6 +440,14 @@ function doCheck(args) {
   const ok = rows.filter(([, v]) => v).length;
   for (const [label, v] of rows) console.log(` ${v ? '✔' : '✗'} ${label}`);
   console.log(`\n${ok}/${rows.length} wiring checks pass${ok === rows.length ? ' — ready.' : ' — see docs/en/12-onboarding.md for each fix.'}`);
+  // Some agents read their own file instead of AGENTS.md. When that file exists without
+  // an "@AGENTS.md" import, the agent ignores the skill routing table.
+  for (const [file, agent] of [['CLAUDE.md', 'Claude Code'], ['GEMINI.md', 'Gemini CLI']]) {
+    const path = join(dir, file);
+    if (existsSync(path) && !/^@AGENTS\.md\s*$/m.test(readFileSync(path, 'utf8'))) {
+      console.log(` note: ${file} exists without an '@AGENTS.md' line — ${agent} then ignores AGENTS.md, so the skill routing table is not loaded. Add '@AGENTS.md' to ${file}.`);
+    }
+  }
   // kit staleness is informational — never fails check
   if (existsSync(join(dir, MANIFEST))) {
     try {
@@ -430,24 +468,24 @@ function doCheck(args) {
 // ── skill ───────────────────────────────────────────────────────────────
 function doSkill(args) {
   const [pack, dir] = args;
-  if (!pack || !dir) fail('usage: ai-sdlc-kit skill <pack> <dir> [--agent claude|cursor|codex|zcode]');
+  if (!pack || !dir) fail('usage: ai-sdlc-kit skill <pack> <dir> [--agent claude|cursor|codex|zcode|gemini|copilot]');
   let ai = null;
   const i = args.findIndex(a => a === '--agent' || a === '--ai');
   if (i !== -1) ai = args[i + 1] ?? fail(`${args[i]} needs a value`);
   if (!ai) {
     ai = 'claude';
-    console.log(`note: no --agent given — defaulting to claude (.claude/skills/). Pass --agent claude|cursor|codex|zcode to choose the target.`);
+    console.log(`note: no --agent given — defaulting to claude (.claude/skills/). Pass --agent claude|cursor|codex|zcode|gemini|copilot to choose the target.`);
   }
-  const agentDir = { claude: '.claude/skills', cursor: '.cursor/skills', codex: '.agents/skills', zcode: '.zcode/skills' }[ai]
-    ?? fail(`unknown --agent '${ai}' (claude|cursor|codex|zcode)`);
+  const agentDir = AGENT_DIRS[ai] ?? fail(`unknown --agent '${ai}' (claude|cursor|codex|zcode|gemini|copilot)`);
   const target = resolve(dir);
   const mode = projectMode(target);
-  const { rows, packs } = skillRows(installedSkillNames(target, pack), mode);
+  const { rows, packs } = skillRows(installedSkillNames(target, agentDir, mode, pack), mode);
   const p = packs.find(x => x.name === pack);
   if (p.class !== 'local') printExternalPack(p);
   else if (mode === MODE_PLUGIN) console.log(STR.pluginLocal(p.name));
   else installLocalPack(p, target, agentDir);
-  wireAgentsBlock(target, rows, mode);
+  wireAgentsBlock(target, rows, mode, agentDir);
+  wireAgentEntry(target, ai);
 }
 
 // ── update ──────────────────────────────────────────────────────────────
@@ -517,13 +555,14 @@ function doUpdate(args) {
       else console.log(STR.external(p.name, p.version ?? ''));
     }
     if (names.length && !dry) {
-      const { rows } = skillRows(names, mode);
-      wireAgentsBlock(dir, rows, mode);
+      const { rows } = skillRows(installedSkillNames(dir, agentDir, mode), mode);
+      wireAgentsBlock(dir, rows, mode, agentDir);
     }
   }
 
   if (!dry) {
     const packs = readRegistryPacks();
+    wireAgentEntry(dir, m.agent ?? 'claude');
     m.kitVersion = VERSION;
     m.updatedAt = new Date().toISOString();
     m.skills = installed.map((s) => {
