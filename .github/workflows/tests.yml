@@ -130,3 +130,12 @@ jobs:
           test -z "$(node cli/ai-sdlc-kit.mjs notify /tmp/does-not-exist)"
           node -e 'const f = "/tmp/rt/.ai-sdlc-kit.json"; const m = require(f); m.kitVersion = "1.6.0"; require("fs").writeFileSync(f, JSON.stringify(m));'
           node cli/ai-sdlc-kit.mjs notify /tmp/rt | node -e 'const o = JSON.parse(require("fs").readFileSync(0, "utf8")); if (!o.systemMessage || !o.hookSpecificOutput.additionalContext) process.exit(1);'
+      - name: /ai-sdlc-kit:init command — dry run previews plugin mode and writes nothing
+        run: |
+          rm -rf /tmp/cmd-init
+          node cli/ai-sdlc-kit.mjs init /tmp/cmd-init --agent claude --plugin --dry-run | grep -q "skill (plugin)   intent-review"
+          test ! -e /tmp/cmd-init
+          test -f commands/init.md
+          grep -q "^disable-model-invocation: true$" commands/init.md
+          grep -q -- "--dry-run" commands/init.md
+          grep -q -- "--plugin" commands/init.md

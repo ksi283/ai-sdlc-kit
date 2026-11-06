@@ -35,6 +35,7 @@ node cli/ai-sdlc-kit.mjs --help
 |---|---|
 | `init <dir>` | Scaffold project: AGENTS.md, templates, policy, CI, CODEOWNERS + auto-activation skills |
 | `init <dir> --plugin` | (chỉ `claude`) không copy skill nội bộ: skill lấy từ plugin Claude Code `ai-sdlc-kit`, routing dùng tên `ai-sdlc-kit:<pack>` |
+| `/ai-sdlc-kit:init <dir>` | Trong Claude Code (plugin đã cài): chạy `init --plugin`. Chạy `--dry-run` trước, **chỉ ghi file sau khi bạn xác nhận**. Không tự thêm `--force` |
 | `notify [dir]` | Hook SessionStart của plugin: nhắc khi dự án dựng bằng kit cũ hơn; im lặng khi không cần |
 | `check [dir]` | Báo cáo wiring 10 điểm — **exit 1 khi thiếu**, dùng được như bước CI |
 | `skill <pack> <dir>` | Cài một pack từ [`skills/registry.yml`](../skills/registry.yml) vào project |

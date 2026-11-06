@@ -406,7 +406,14 @@ function doInit(args) {
   }
 
   if (skills.length) {
-    if (dry) { for (const p of packs) console.log(`  ${p.class === 'local' ? 'skill (local)   ' : 'skill (external)'} ${p.name} ${p.version ?? ''}`); }
+    if (dry) {
+      // Preview must match the real run: plugin-mode local packs are not copied.
+      for (const p of packs) {
+        if (p.class !== 'local') console.log(`  skill (external) ${p.name} ${p.version ?? ''}`);
+        else if (mode === MODE_PLUGIN) console.log(STR.pluginLocal(p.name));
+        else console.log(`  skill (local)    ${p.name} ${p.version ?? ''}`);
+      }
+    }
     else {
       for (const p of packs) {
         if (p.class !== 'local') printExternalPack(p);

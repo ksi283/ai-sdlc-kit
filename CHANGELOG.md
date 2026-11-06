@@ -6,6 +6,14 @@ Git tag `v1.7.1` đánh dấu bản phát hành này. Các bản 1.5.0 đến 1.
 
 **Plugin Claude Code:** plugin theo dõi commit (SHA), không theo số phiên bản này. Khi kit có bản phát hành mới, hook SessionStart hỏi người dùng có muốn cập nhật dự án không; hook không tự cập nhật. Chi tiết xem [docs/vi/14-plugin-distribution.md](docs/vi/14-plugin-distribution.md) §10.
 
+## [Unreleased]
+
+### Thêm
+- Command `/ai-sdlc-kit:init <dir> [--skills …] [--force]`: khởi tạo dự án ngay trong Claude Code, ở chế độ plugin (`init --plugin`). Command chạy `--dry-run` trước, liệt kê những gì sẽ ghi, và chỉ ghi sau khi người dùng xác nhận. Không tự thêm `--force`; nếu thư mục không rỗng, command dừng và hỏi.
+
+### Sửa lỗi
+- `init --plugin --dry-run` in `skill (local)` thay vì `skill (plugin)`. Bản xem trước giờ khớp với lần chạy thật.
+
 ## [1.7.1] - 2026-11-04
 
 ### Thêm

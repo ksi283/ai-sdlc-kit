@@ -35,6 +35,7 @@ node cli/ai-sdlc-kit.mjs --help
 |---|---|
 | `init <dir>` | Scaffold a project: AGENTS.md, templates, policy, CI, CODEOWNERS + skill auto-activation |
 | `init <dir> --plugin` | (`claude` only) copies no local skills: they come from the `ai-sdlc-kit` Claude Code plugin, and routing uses `ai-sdlc-kit:<pack>` |
+| `/ai-sdlc-kit:init <dir>` | Inside Claude Code (plugin installed): runs `init --plugin`. Does a `--dry-run` first and **writes files only after you confirm**. Never adds `--force` on its own |
 | `notify [dir]` | Plugin SessionStart hook: asks for a decision when the project was scaffolded by an older kit release; silent otherwise |
 | `check [dir]` | 10-point wiring report — **exit 1 when incomplete**, CI-usable |
 | `skill <pack> <dir>` | Install a pack from [`skills/registry.yml`](../skills/registry.yml) into a project |

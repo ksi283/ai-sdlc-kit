@@ -86,7 +86,7 @@ Prototype ban đầu nằm ở `/tmp` (commit `8d56ffb`, scratch). Từ đó, c�
 ## 6. Rủi ro và quyết định
 
 1. **Trùng skill.** Đã giải quyết bằng `init --plugin` (§8c). Dự án cũ vẫn ở chế độ copy, không đổi.
-2. **Lệnh ghi file từ plugin.** `init`/`update` ghi vào project với quyền người dùng. Khi đưa vào `commands/`, mặc định phải `--dry-run` và xác nhận trước khi ghi. Chưa làm (§7).
+2. **Lệnh ghi file từ plugin.** `init`/`update` ghi vào project với quyền người dùng. Khi đưa vào `commands/`, mặc định phải `--dry-run` và xác nhận trước khi ghi. `init` đã làm (`commands/init.md`); `update` chưa làm (§7).
 3. **Version.** Đã quyết định (b): theo SHA cho plugin, số phát hành cho thông báo (§10).
 4. **Node ≥ 18** phải có trên máy người dùng.
 5. **Repo private** nghĩa là người dùng phải có quyền đọc repo (đã ghi trong `cli/README.md`).
@@ -108,7 +108,7 @@ Prototype ban đầu nằm ở `/tmp` (commit `8d56ffb`, scratch). Từ đó, c�
 
 5. Cài từ GitHub thật, kiểm chứng trên máy thứ hai.
 6. `CHANGELOG.md` trước khi phát hành đầu tiên dùng cơ chế thông báo (§6.8).
-7. Command `init`/`update` với `--dry-run` mặc định (§6.2).
+7. Command `update` với `--dry-run` mặc định (§6.2). `init` đã có: `/ai-sdlc-kit:init` (`commands/init.md`) chạy dry run trước và chỉ ghi sau khi người dùng xác nhận; đã kiểm chứng bằng `claude -p --plugin-dir`.
 8. Dòng cài plugin trong README, sau khi bước 5 xác nhận chạy được. Validator đề xuất `/plugin install ai-sdlc-kit --marketplace ksi283/ai-sdlc-kit`, cần kiểm chứng trước.
 9. Bản `docs/en/14-plugin-distribution.md`.
 
